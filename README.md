@@ -12,11 +12,19 @@ Mashing the demo is fairly advantageous given the WIP status of the Viewports br
 
 ## Deviations
 
-DearImGui is tweaked to not own the ID3D11Device, ID3D11DeviceContext, or ID3D11RenderTargetView for the main render target. MonoGame instead passes those to it where needed.
+Access is entirely global single-instance.
+
+DearImGui is tweaked to not own the ID3D11Device, ID3D11DeviceContext, or ID3D11RenderTargetView for the main render target (or functions that would try to own those are not called). MonoGame instead passes those to it where needed.
 
 Enumerations/flags are wrapped as their underscored name (ie. `ImGuiDir_`) with their values mapped without the prefix.
 
 `class ImGuiIO` contains some access to Dear ImGui's ImGuiContext menu, largely just convenience as binding the ImGuiContext type isn't necessary for realistic cases (custom widgets should be written in C and bound to C#).
+
+Render/Draw has three functions, two of which are intended to be used together (for periodic updates re-rendering old draw-data).
+
+- `ImGuiCLI::ImGuiContext::RenderAndDraw(IntPtr backBuffer)` does both the ImGui::Render and draws to the given render-target.
+- `ImGuiCLI::ImGuiContext::RenderNoDraw()` only does the ImGui::Render call for building up the draw lists and platform updates.
+- `ImGuiCLI::ImGuiContext::Draw(IntPtr backBuffer)` only does the graphics device rendering dispatch calls for existing draw lists (and platform window draws).
 
 ## C# Usage
 
@@ -104,11 +112,11 @@ Enumerations/flags are wrapped as their underscored name (ie. `ImGuiDir_`) with 
 
 ## MonoGame.Framework.Windows Changes
 
-- Change visibility of Microsoft.Xna.Framework.Windows.WinFormsGameWindow to public
+- Change visibility of Microsoft.Xna.Framework.Windows.**WinFormsGameWindow to public**
 
-- Change visibility of Microsoft.Xna.Framework.Windows.WinFormsGameForm to public
+- Change visibility of Microsoft.Xna.Framework.Windows.**WinFormsGameForm to public**
 
-- Expose ID3DDeviceContext and BackBuffer IntPtr's in GraphicsDevice.DirectX.cs
+- Expose ID3DDeviceContext and BackBuffer IntPtr's in **GraphicsDevice.DirectX.cs**
 
         public object BackBuffer
         {
@@ -120,7 +128,7 @@ Enumerations/flags are wrapped as their underscored name (ie. `ImGuiDir_`) with 
             get { return _d3dContext; }
         }
 
-- Use Windows style message loop in WinFormsGameWindow's RunLoop()
+- Use Windows style message loop in **WinFormsGameWindow**'s RunLoop()
 
         internal void RunLoop()
         {
@@ -147,9 +155,9 @@ Enumerations/flags are wrapped as their underscored name (ie. `ImGuiDir_`) with 
                 UpdateWindows();
                 Game.Tick();
             }
-            ...
+            ... continue old code ...
 
-- Add message routing to WinFormsGameForm, add event signal to `WndProc`
+- Add message routing to **WinFormsGameForm**, add event signal to `WndProc`
 
         public System.Collections.Generic.HashSet<int> SignalNativeMessages { get; private set; } = new System.Collections.Generic.HashSet<int>();
         
@@ -161,8 +169,9 @@ Enumerations/flags are wrapped as their underscored name (ie. `ImGuiDir_`) with 
         
             if (SignalNativeMessages.Contains(m.Msg) && NotifyMessage != null)
                 NotifyMessage(this, m);
+            ... continue old code ...
 
-- Expose Graphics.Texture.DirectX.cs IntPtr for the SRV (*for ImGui::Image())
+- Expose Graphics.**Texture.DirectX.cs** IntPtr for the SRV (*for ImGui::Image())
 
         public IntPtr GetNativeHandle()
         {
