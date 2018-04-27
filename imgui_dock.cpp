@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "imgui.h"
 #define IMGUI_DEFINE_PLACEMENT_NEW
 #include "imgui_internal.h"

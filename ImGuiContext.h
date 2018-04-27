@@ -23,9 +23,6 @@ namespace ImGuiCLI
         void RenderAndDraw(System::IntPtr renderTarget);
 
         void ResizeMain(int width, int height, System::IntPtr mainRenderTarget);
-
-    private:
-        ImGuiNative* pData_;
     };
 
 }

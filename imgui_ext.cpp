@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "imgui_ext.h"
 #include "imgui_internal.h"
 #include "imgui.h"

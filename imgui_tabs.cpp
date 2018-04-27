@@ -1,4 +1,3 @@
-#include "stdafx.h"
 // dear imgui tabs
 // experimental/WIP feature, API will be reworked.
 
