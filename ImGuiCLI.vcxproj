@@ -129,6 +129,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FontAwesome.h" />
     <ClInclude Include="FontAwesome5.h" />
     <ClInclude Include="imconfig.h" />
     <ClInclude Include="imgui.h" />
@@ -150,6 +151,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="FontAwesome.cpp" />
     <ClCompile Include="imgui.cpp" />
     <ClCompile Include="ImGuiCLI.cpp" />
     <ClCompile Include="ImGuiContext.cpp" />
