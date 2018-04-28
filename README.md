@@ -28,6 +28,8 @@ Render/Draw has three functions, two of which are intended to be used together (
 
 ## C# Usage
 
+Complete example [gist](https://gist.github.com/JSandusky/11b6a6ea85d42c9ab8606378a78c50cf).
+
 ### Initialize
 
        System.IntPtr device = ((SharpDX.Direct3D11.Device)GraphicsDevice.Handle).NativePointer;
@@ -130,6 +132,14 @@ Render/Draw has three functions, two of which are intended to be used together (
 
 - Use Windows style message loop in **WinFormsGameWindow**'s RunLoop()
 
+        [System.Security.SuppressUnmanagedCodeSecurity] // We won't use this maliciously
+        [DllImport("user32.dll")]
+        public static extern bool TranslateMessage([In] ref NativeMessage lpMsg);
+        
+        [System.Security.SuppressUnmanagedCodeSecurity] // We won't use this maliciously
+        [DllImport("user32.dll")]
+        public static extern IntPtr DispatchMessage([In] ref NativeMessage lpmsg);
+        
         internal void RunLoop()
         {
             // https://bugzilla.novell.com/show_bug.cgi?id=487896
