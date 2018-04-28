@@ -218,7 +218,7 @@ struct DockContext
 	Dock* m_current = nullptr;
 	int m_last_frame = 0;
 	EndAction_ m_end_action;
-
+    ImRect m_dockspace_rect;
 
 	~DockContext() {}
 
@@ -444,14 +444,15 @@ struct DockContext
 
 	static ImRect getDockedRect(const ImRect& rect, Slot_ dock_slot)
 	{
+        ImVec2 size = rect.GetSize();
 		ImVec2 half_size = rect.GetSize() * 0.5f;
 		switch (dock_slot)
 		{
 			default: return rect;
-			case Slot_Top: return ImRect(rect.Min, rect.Min + ImVec2(rect.Max.x, half_size.y));
+			case Slot_Top: return ImRect(rect.Min, rect.Min + ImVec2(size.x, half_size.y));
 			case Slot_Right: return ImRect(rect.Min + ImVec2(half_size.x, 0), rect.Max);
 			case Slot_Bottom: return ImRect(rect.Min + ImVec2(0, half_size.y), rect.Max);
-			case Slot_Left: return ImRect(rect.Min, rect.Min + ImVec2(half_size.x, rect.Max.y));
+			case Slot_Left: return ImRect(rect.Min, rect.Min + ImVec2(half_size.x, size.y));
 		}
 	}
 
@@ -551,17 +552,8 @@ struct DockContext
 	void handleDrag(Dock& dock)
 	{
 		Dock* dest_dock = getDockAt(GetIO().MousePos);
-
-		Begin("##Overlay",
-			NULL,
-			ImVec2(0, 0),
-			0.f,
-			ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
-				ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings |
-				ImGuiWindowFlags_AlwaysAutoResize);
-		ImDrawList* canvas = GetWindowDrawList();
-
-		canvas->PushClipRectFullScreen();
+        // To discover, are there multiple overlay lists now?
+        ImDrawList* canvas = GetOverlayDrawList();
 
 		ImU32 docked_color = GetColorU32(ImGuiCol_FrameBg);
 		docked_color = (docked_color & 0x00ffFFFF) | 0x80000000;
@@ -573,19 +565,14 @@ struct DockContext
 					ImRect(dest_dock->pos, dest_dock->pos + dest_dock->size),
 					false))
 			{
-				canvas->PopClipRect();
-				End();
 				return;
 			}
 		}
-		if (dockSlots(dock, nullptr, ImRect(ImVec2(0, 0), GetIO().DisplaySize), true))
+        
+		if (dockSlots(dock, nullptr, m_dockspace_rect, true))
 		{
-			canvas->PopClipRect();
-			End();
 			return;
 		}
-		canvas->AddRectFilled(dock.pos, dock.pos + dock.size, docked_color);
-		canvas->PopClipRect();
 
 		if (!IsMouseDown(0))
 		{
@@ -593,8 +580,6 @@ struct DockContext
 			dock.location[0] = 0;
 			dock.setActive();
 		}
-
-		End();
 	}
 
 
@@ -885,7 +870,7 @@ struct DockContext
 		if (!dest)
 		{
 			dock.status = Status_Docked;
-			dock.setPosSize(ImVec2(0, 0), GetIO().DisplaySize);
+			dock.setPosSize(m_dockspace_rect.Min, m_dockspace_rect.GetSize());
 		}
 		else if (dock_slot == Slot_Tab)
 		{
@@ -1051,27 +1036,41 @@ struct DockContext
 		beginPanel();
 
 		m_current = &dock;
-		if (dock.status == Status_Dragged) handleDrag(dock);
+        if (dock.status == Status_Dragged)
+            handleDrag(dock);
 
-		bool is_float = dock.status == Status_Float;
+        // handle drag is no longer responsible for doing any drawing
+		bool is_float = dock.status == Status_Float || dock.status == Status_Dragged;
 
         if (dock.hidden)
             return false;
 
 		if (is_float)
 		{
+            if (dock.status == Status_Dragged)
+                ImGui::SetNextWindowFocus();
 			SetNextWindowPos(dock.pos);
 			SetNextWindowSize(dock.size);
 			bool ret = Begin(label,
 				opened,
 				dock.size,
-				-1.0f,
+				dock.status == Status_Dragged ? 0.3f : 1.0f,
 				ImGuiWindowFlags_NoCollapse | extra_flags);
-			m_end_action = EndAction_End;
+            m_end_action = EndAction_End;
+
+            ImGuiContext& g = *GImGui;
+            if (dock.status == Status_Dragged)
+            {
+                // have to do this so that a freshly undocked window will correctly promote into
+                // a platform window
+                ImGuiContext& g = *GImGui;
+                g.ActiveId = GetCurrentWindow()->MoveId;
+                g.ActiveIdWindow = GetCurrentWindow();
+                g.MovingWindow = GetCurrentWindow();
+            }
+
 			dock.pos = GetWindowPos();
 			dock.size = GetWindowSize();
-
-			ImGuiContext& g = *GImGui;
 
 			if (g.ActiveId == GetCurrentWindow()->MoveId && g.IO.MouseDown[0])
 			{
@@ -1098,7 +1097,6 @@ struct DockContext
         }
         else if (dock.getFirstTab().noTabs)
         {
-            //drewTabs = false;
             fillLocation(dock);
             if (opened) *opened = true;
         }
@@ -1310,6 +1308,7 @@ void ShutdownDock()
 
 void RootDock(const ImVec2& pos, const ImVec2& size)
 {
+    g_dock.m_dockspace_rect = ImRect(pos, pos + size);
 	g_dock.rootDock(pos, size);
 }
 

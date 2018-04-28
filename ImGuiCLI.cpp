@@ -3,6 +3,7 @@
 #include "ImGuiCLI.h"
 
 #include "imgui.h"
+#include "imgui_dock.h"
 #include "imgui_ext.h"
 #include "imgui_internal.h"
 #include "imgui_tabs.h"
@@ -523,3 +524,22 @@ ImGuiCLI::ImGuiMouseCursor_ ImGuiCLI::ImGuiIO::MouseCursor::get() { return (ImGu
 bool ImGuiCLI::ImGuiIO::WantCaptureMouse::get() { return ImGui::GetIO().WantCaptureMouse; }
 bool ImGuiCLI::ImGuiIO::WantCaptureKeyboard::get() { return ImGui::GetIO().WantCaptureKeyboard; }
 bool ImGuiCLI::ImGuiIO::WantTextInput::get() { return ImGui::GetIO().WantTextInput; }
+
+// Docking
+void ImGuiCLI::ImGuiDock::RootDock(Vector2 pos, Vector2 size) { ImGui::RootDock(ImVec2(pos.X, pos.Y), ImVec2(size.X, size.Y)); }
+void ImGuiCLI::ImGuiDock::ShutdownDock() { ImGui::ShutdownDock(); }
+bool ImGuiCLI::ImGuiDock::BeginDock(System::String^ label, int windowFlags, int dockFlags) { return ImGui::BeginDock(LBL, 0x0, windowFlags, dockFlags); }
+bool ImGuiCLI::ImGuiDock::BeginDock(System::String^ label, bool% opened, int flags, int dockFlags)
+{
+    bool t = opened;
+    if (ImGui::BeginDock(LBL, &t, flags, dockFlags))
+    {
+        opened = t;
+        return true;
+    }
+    return false;
+}
+void ImGuiCLI::ImGuiDock::EndDock() { ImGui::EndDock(); }
+void ImGuiCLI::ImGuiDock::SetDockActive() { ImGui::SetDockActive(); }
+void ImGuiCLI::ImGuiDock::LoadDock() { ImGui::LoadDock(); }
+void ImGuiCLI::ImGuiDock::SaveDock() { ImGui::SaveDock(); }

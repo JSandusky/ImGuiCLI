@@ -3373,7 +3373,8 @@ static void ImGui::UpdateMovingWindow()
                 g.MouseRefViewport = moving_window->Viewport;
 
             // Clear the NoInput window flag set by the Viewport system
-            moving_window->Viewport->Flags &= ~ImGuiViewportFlags_NoInputs;
+            if (moving_window->Viewport != nullptr)
+                moving_window->Viewport->Flags &= ~ImGuiViewportFlags_NoInputs;
 
             ClearActiveID();
             g.MovingWindow = NULL;
@@ -3651,6 +3652,7 @@ void ImGui::UpdatePlatformWindows()
         // Update alpha
         if (viewport->LastAlpha != viewport->Alpha && g.PlatformIO.Platform_SetWindowAlpha)
             g.PlatformIO.Platform_SetWindowAlpha(viewport, viewport->Alpha);
+        
         viewport->LastAlpha = viewport->Alpha;
 
         // Show window. On startup ensure platform window don't get focus
@@ -6879,7 +6881,11 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
             // Window background
             ImU32 bg_col = GetColorU32(GetWindowBgColorIdxFromFlags(flags));
             if (g.NextWindowData.BgAlphaCond != 0)
+            {
                 bg_col = (bg_col & ~IM_COL32_A_MASK) | (IM_F32_TO_INT8_SAT(g.NextWindowData.BgAlphaVal) << IM_COL32_A_SHIFT);
+                if (window->ViewportOwned)
+                    window->Viewport->Alpha = g.NextWindowData.BgAlphaVal;
+            }
             if (window->ViewportOwned)
             {
                 //window->Viewport->Alpha = ((bg_col & IM_COL32_A_MASK) >> IM_COL32_A_SHIFT) / 255.0f;
@@ -14260,7 +14266,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                 else
                     ImGui::BulletText("NavRectRel[0]: <None>");
                 ImGui::BulletText("Viewport: %d, ViewportId: 0x%08X, ViewportPos: (%.1f,%.1f)", window->Viewport ? window->Viewport->Idx : -1, window->ViewportId, window->ViewportPos.x, window->ViewportPos.y);
-                ImGui::BulletText("ViewportMonitor: %d", window->Viewport->PlatformMonitor);
+                ImGui::BulletText("ViewportMonitor: %d", window->Viewport ? window->Viewport->PlatformMonitor : -1);
                 if (window->RootWindow != window) NodeWindow(window->RootWindow, "RootWindow");
                 if (window->ParentWindow != NULL) NodeWindow(window->ParentWindow, "ParentWindow");
                 if (window->DC.ChildWindows.Size > 0) NodeWindows(window->DC.ChildWindows, "ChildWindows");

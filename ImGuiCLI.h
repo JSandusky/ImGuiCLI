@@ -407,4 +407,32 @@ namespace ImGuiCLI {
         static void PushLargeFont();
         static void PushLargeBoldFont();
     };
+
+    [System::Flags]
+    public enum class DockFlags
+    {
+        NoTabs = 1,
+        StartLeft = 1 << 1,
+        StartRight = 1 << 2,
+        StartTop = 1 << 3,
+        StartBottom = 1 << 4,
+        NoPad = 1 << 5,
+        Hidden = 1 << 6,
+        NoCloseButton = 1 << 7
+    };
+
+    public ref class ImGuiDock
+    {
+    public:
+        static void RootDock(Vector2 pos, Vector2 size);
+        static void ShutdownDock();
+        static bool BeginDock(System::String^ label) { return BeginDock(label, 0); }
+        static bool BeginDock(System::String^ label, int windowFlags) { return BeginDock(label, 0, 0); }
+        static bool BeginDock(System::String^ label, int windowFlags, int dockFlags);
+        static bool BeginDock(System::String^ label, bool% opened, int windowFlags, int dockFlags);
+        static void EndDock();
+        static void SetDockActive();
+        static void LoadDock();
+        static void SaveDock();
+    };
 }
