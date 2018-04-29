@@ -118,6 +118,9 @@ Complete example [gist](https://gist.github.com/JSandusky/11b6a6ea85d42c9ab86063
 
 - Change visibility of Microsoft.Xna.Framework.Windows.**WinFormsGameForm to public**
 
+- Change visibility of Microsoft.Xna.Framework.Windows.**HorizontalMouseWheelEventArgs to public**
+    - This is just to deal with *less visible than XXX* and not actually a meaningful change
+
 - Expose ID3DDeviceContext and BackBuffer IntPtr's in **GraphicsDevice.DirectX.cs**
 
         public object BackBuffer
