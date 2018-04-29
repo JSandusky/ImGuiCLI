@@ -327,7 +327,7 @@ struct DockContext
                         dsize.x = -100000;
                     else if (dock.parent && dock.parent->children[1] == &dock)
                         dsize.x = 100000;
-                    else if (dock.parent == 0x0)
+                    else if (dock.parent == nullptr)
                         dsize.x = 100000;
                 }
 				dsize.x = -ImMin(-dsize.x, dock.children[0]->size.x - min_size0.x);
@@ -1164,11 +1164,12 @@ struct DockContext
 	{
 		FILE *fp = fopen("imgui_dock.layout", "w");
 		fprintf(fp, "docks %d\n\n", m_docks.size());
-		for (int i = 0; i < m_docks.size(); ++i) {
+		for (int i = 0; i < m_docks.size(); ++i) 
+        {
 			Dock& dock = *m_docks[i];
 
 			fprintf(fp, "index    %d\n", i);
-			fprintf(fp, "label    %s\n", dock.parent ? (dock.label[0] == '\0' ? "DOCK" : dock.label) : "ROOT"),
+            fprintf(fp, "label    %s\n", dock.parent ? (dock.label[0] == '\0' ? "DOCK" : dock.label) : (dock.label[0] == '\0' ? "ROOT" : dock.label));
 			fprintf(fp, "x        %d\n", (int)dock.pos.x);
 			fprintf(fp, "y        %d\n", (int)dock.pos.y);
 			fprintf(fp, "size_x   %d\n", (int)dock.size.x);
