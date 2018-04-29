@@ -1223,7 +1223,7 @@ struct DockContext
 				int id, id1, id2, id3, id4, id5;
 				int st;
 				int b1, b2;
-				char lab[32];
+				char lab[256];
                 unsigned noTabs = 0;
                 unsigned noPad = 0;
 				
