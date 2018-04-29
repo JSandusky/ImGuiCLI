@@ -52,14 +52,14 @@ namespace ImGuiCLI
     void ImGuiCli::PushStyleVar(ImGuiStyleVar_ var, Vector2 v) { ImGui::PushStyleVar((int)var, ImVec2(v.X, v.Y)); }
     void ImGuiCli::PopStyleVar(int val) { ImGui::PopStyleVar(val); }
 
-    bool ImGuiCli::Begin(System::String^ title, int winFlags)
+    bool ImGuiCli::Begin(System::String^ title, ImGuiWindowFlags_ winFlags)
     {
-        return ImGui::Begin(ToSTLString(title).c_str(), 0x0, winFlags);
+        return ImGui::Begin(ToSTLString(title).c_str(), 0x0, (int)winFlags);
     }
-    bool ImGuiCli::Begin(System::String^ title, bool% open, int winFlags)
+    bool ImGuiCli::Begin(System::String^ title, bool% open, ImGuiWindowFlags_ winFlags)
     {
         bool o = open;
-        bool ret = ImGui::Begin(ToSTLString(title).c_str(), &o, winFlags);
+        bool ret = ImGui::Begin(ToSTLString(title).c_str(), &o, (int)winFlags);
         open = o;
         return ret;
     }
@@ -137,10 +137,10 @@ namespace ImGuiCLI
         return false;
     }
 
-    bool ImGuiCli::InputText(System::String^ label, System::String^% text, int flags)
+    bool ImGuiCli::InputText(System::String^ label, System::String^% text, ImGuiInputTextFlags_ flags)
     {
         COPY_TBUF(text);
-        if (ImGui::InputText(ToSTLString(label).c_str(), BUFF, 4096, flags))
+        if (ImGui::InputText(ToSTLString(label).c_str(), BUFF, 4096, (int)flags))
         {
             text = gcnew System::String(BUFF);
             return true;
@@ -148,10 +148,10 @@ namespace ImGuiCLI
         return false;
     }
 
-    bool ImGuiCli::InputTextMultiline(System::String^ label, System::String^% text, Vector2 size, int flags)
+    bool ImGuiCli::InputTextMultiline(System::String^ label, System::String^% text, Vector2 size, ImGuiInputTextFlags_ flags)
     {
         COPY_TBUF(text);
-        if (ImGui::InputTextMultiline(LBL, BUFF, 4096, ImVec2(size.X, size.Y), flags))
+        if (ImGui::InputTextMultiline(LBL, BUFF, 4096, ImVec2(size.X, size.Y), (int)flags))
         {
             text = gcnew System::String(BUFF);
             return true;
@@ -180,10 +180,10 @@ namespace ImGuiCLI
         return false;
     }
 
-    bool ImGuiCli::InputInt(System::String^ label, int% val, int step, int stepFast, int flags)
+    bool ImGuiCli::InputInt(System::String^ label, int% val, int step, int stepFast, ImGuiInputTextFlags_ flags)
     {
         int v = val;
-        if (ImGui::InputInt(ToSTLString(label).c_str(), &v, step, stepFast, flags))
+        if (ImGui::InputInt(ToSTLString(label).c_str(), &v, step, stepFast, (int)flags))
         {
             val = v;
             return true;
@@ -202,10 +202,10 @@ namespace ImGuiCLI
         return false;
     }
 
-    bool ImGuiCli::InputFloat(System::String^ label, float% val, float step, float stepFast, int decimPrec, int flags)
+    bool ImGuiCli::InputFloat(System::String^ label, float% val, float step, float stepFast, int decimPrec, ImGuiInputTextFlags_ flags)
     {
         float v = val;
-        if (ImGui::InputFloat(ToSTLString(label).c_str(), &v, step, stepFast, decimPrec, flags))
+        if (ImGui::InputFloat(ToSTLString(label).c_str(), &v, step, stepFast, decimPrec, (int)flags))
         {
             val = v;
             return true;
@@ -299,10 +299,11 @@ namespace ImGuiCLI
     }
 
     bool ImGuiCli::Selectable(System::String^ label, bool selected) { return ImGui::Selectable(LBL, selected); }
+    bool ImGuiCli::Selectable(System::String^ label, bool selected, ImGuiSelectableFlags_ flags) { return ImGui::Selectable(LBL, selected, (int)flags); }
 
     // Popups
     void ImGuiCli::OpenPopup(System::String^ label) { ImGui::OpenPopup(LBL); }
-    bool ImGuiCli::BeginPopup(System::String^ label, int flags) { return ImGui::BeginPopup(LBL, flags); }    
+    bool ImGuiCli::BeginPopup(System::String^ label, ImGuiWindowFlags_ flags) { return ImGui::BeginPopup(LBL, (int)flags); }    
     void ImGuiCli::EndPopup() { ImGui::EndPopup(); }
     bool ImGuiCli::IsPopupOpen(System::String^ label) { return ImGui::IsPopupOpen(LBL); }
     void ImGuiCli::CloseCurrentPopup() { ImGui::CloseCurrentPopup(); }
@@ -415,12 +416,12 @@ namespace ImGuiCLI
         return false;
     }
     bool ImGuiCli::RadioButton(System::String^ label, bool selected) { return ImGui::RadioButton(LBL, selected);  }
-    bool ImGuiCli::BeginCombo(System::String^ label, System::String^ preview) { return ImGui::BeginCombo(LBL, ToSTLString(preview).c_str()); }
+    bool ImGuiCli::BeginCombo(System::String^ label, System::String^ preview, ImGuiComboFlags_ flags) { return ImGui::BeginCombo(LBL, ToSTLString(preview).c_str(), (int)flags); }
     void ImGuiCli::EndCombo() { ImGui::EndCombo(); }
 
-    bool ImGuiCli::Combo(System::String^ label, int% currentItem, array<System::String^>^ items, int flags)
+    bool ImGuiCli::Combo(System::String^ label, int% currentItem, array<System::String^>^ items, ImGuiComboFlags_ flags)
     {
-        if (!ImGui::BeginCombo(LBL, ToSTLString(items[currentItem]).c_str(), flags))
+        if (!ImGui::BeginCombo(LBL, ToSTLString(items[currentItem]).c_str(), (int)flags))
             return false;
 
         bool value_changed = false;
@@ -442,9 +443,9 @@ namespace ImGuiCLI
         return value_changed;
     }
     
-    bool ImGuiCli::Combo(System::String^ label, int% currentItem, array<System::Object^>^ items, int flags)
+    bool ImGuiCli::Combo(System::String^ label, int% currentItem, array<System::Object^>^ items, ImGuiComboFlags_ flags)
     {
-        if (!ImGui::BeginCombo(LBL, ToSTLString(items[currentItem]->ToString()).c_str(), flags))
+        if (!ImGui::BeginCombo(LBL, ToSTLString(items[currentItem]->ToString()).c_str(), (int)flags))
             return false;
 
         bool value_changed = false;
@@ -679,11 +680,11 @@ bool ImGuiCLI::ImGuiIO::WantTextInput::get() { return ImGui::GetIO().WantTextInp
 // Docking
 void ImGuiCLI::ImGuiDock::RootDock(Vector2 pos, Vector2 size) { ImGui::RootDock(ImVec2(pos.X, pos.Y), ImVec2(size.X, size.Y)); }
 void ImGuiCLI::ImGuiDock::ShutdownDock() { ImGui::ShutdownDock(); }
-bool ImGuiCLI::ImGuiDock::BeginDock(System::String^ label, int windowFlags, int dockFlags) { return ImGui::BeginDock(LBL, 0x0, windowFlags, dockFlags); }
-bool ImGuiCLI::ImGuiDock::BeginDock(System::String^ label, bool% opened, int flags, int dockFlags)
+bool ImGuiCLI::ImGuiDock::BeginDock(System::String^ label, ImGuiWindowFlags_ windowFlags, DockFlags dockFlags) { return ImGui::BeginDock(LBL, 0x0, (unsigned)windowFlags, (unsigned)dockFlags); }
+bool ImGuiCLI::ImGuiDock::BeginDock(System::String^ label, bool% opened, ImGuiWindowFlags_ flags, DockFlags dockFlags)
 {
     bool t = opened;
-    if (ImGui::BeginDock(LBL, &t, flags, dockFlags))
+    if (ImGui::BeginDock(LBL, &t, (unsigned)flags, (unsigned)dockFlags))
     {
         opened = t;
         return true;

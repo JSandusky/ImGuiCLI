@@ -10,6 +10,7 @@ namespace ImGuiCLI {
     [System::Flags]
     public enum class ImGuiTreeNodeFlags_
     {
+        None = 0, // For C++/CLI
         Selected = 1 << 0,   // Draw as selected
         Framed = 1 << 1,   // Full colored frame (e.g. for CollapsingHeader)
         AllowItemOverlap = 1 << 2,   // Hit testing to allow subsequent widgets to overlap this one
@@ -29,6 +30,7 @@ namespace ImGuiCLI {
     [System::Flags]
     public enum class ImGuiWindowFlags_
     {
+        None = 0, // For C++/CLI
         NoTitleBar = 1 << 0,   // Disable title-bar
         NoResize = 1 << 1,   // Disable user resizing with the lower-right grip
         NoMove = 1 << 2,   // Disable user moving the window
@@ -177,6 +179,55 @@ namespace ImGuiCLI {
         COUNT
     };
 
+    [System::Flags]
+    public enum class ImGuiInputTextFlags_
+    {
+        None = 0, // For C++/CLI
+        CharsDecimal = 1 << 0,   // Allow 0123456789.+-*/
+        CharsHexadecimal = 1 << 1,   // Allow 0123456789ABCDEFabcdef
+        CharsUppercase = 1 << 2,   // Turn a..z into A..Z
+        CharsNoBlank = 1 << 3,   // Filter out spaces, tabs
+        AutoSelectAll = 1 << 4,   // Select entire text when first taking mouse focus
+        EnterReturnsTrue = 1 << 5,   // Return 'true' when Enter is pressed (as opposed to when the value was modified)
+        CallbackCompletion = 1 << 6,   // Call user function on pressing TAB (for completion handling)
+        CallbackHistory = 1 << 7,   // Call user function on pressing Up/Down arrows (for history handling)
+        CallbackAlways = 1 << 8,   // Call user function every time. User code may query cursor position, modify text buffer.
+        CallbackCharFilter = 1 << 9,   // Call user function to filter character. Modify data->EventChar to replace/filter input, or return 1 to discard character.
+        AllowTabInput = 1 << 10,  // Pressing TAB input a '\t' character into the text field
+        CtrlEnterForNewLine = 1 << 11,  // In multi-line mode, unfocus with Enter, add new line with Ctrl+Enter (default is opposite: unfocus with Ctrl+Enter, add line with Enter).
+        NoHorizontalScroll = 1 << 12,  // Disable following the cursor horizontally
+        AlwaysInsertMode = 1 << 13,  // Insert mode
+        ReadOnly = 1 << 14,  // Read-only mode
+        Password = 1 << 15,  // Password mode, display all characters as '*'
+        NoUndoRedo = 1 << 16,  // Disable undo/redo. Note that input text owns the text data while active, if you want to provide your own undo/redo stack you need e.g. to call ClearActiveID().
+        CharsScientific = 1 << 17,  // Allow 0123456789.+-*/eE (Scientific notation input)
+    };
+
+    // Flags for ImGui::Selectable()
+    [System::Flags]
+    public enum class ImGuiSelectableFlags_
+    {
+        None = 0, // For C++/CLI
+        DontClosePopups = 1 << 0,   // Clicking this don't close parent popup window
+        SpanAllColumns = 1 << 1,   // Selectable frame can span all columns (text will still fit in current column)
+        AllowDoubleClick = 1 << 2    // Generate press events on double clicks too
+    };
+
+    // Flags for ImGui::BeginCombo()
+    [System::Flags]
+    public enum class ImGuiComboFlags_
+    {
+        None = 0, // For C++/CLI
+        PopupAlignLeft = 1 << 0,   // Align the popup toward the left by default
+        HeightSmall = 1 << 1,   // Max ~4 items visible. Tip: If you want your combo popup to be a specific size you can use SetNextWindowSizeConstraints() prior to calling BeginCombo()
+        HeightRegular = 1 << 2,   // Max ~8 items visible (default)
+        HeightLarge = 1 << 3,   // Max ~20 items visible
+        HeightLargest = 1 << 4,   // As many fitting items as possible
+        NoArrowButton = 1 << 5,   // Display on the preview box without the square arrow button
+        NoPreview = 1 << 6,   // Display only a square arrow button
+        HeightMask_ = HeightSmall | HeightRegular | HeightLarge | HeightLargest
+    };
+
     public ref class ImGuiStyle
     {
     public:
@@ -254,8 +305,8 @@ namespace ImGuiCLI {
         static void PopStyleVar() { PopStyleVar(1); }
         static void PopStyleVar(int val);
 
-        static bool Begin(System::String^ title, int windowFlags);
-        static bool Begin(System::String^ title, bool% open, int windowFlags);
+        static bool Begin(System::String^ title, ImGuiWindowFlags_ windowFlags);
+        static bool Begin(System::String^ title, bool% open, ImGuiWindowFlags_ windowFlags);
         static void End();
         static bool BeginChildFrame(System::String^ label, Vector2 size);
         static void EndChildFrame();
@@ -288,24 +339,24 @@ namespace ImGuiCLI {
         static bool CollapsingHeader(System::String^ title);
         static bool CollapsingHeader(System::String^ title, bool% opened);
 
-        static bool InputText(System::String^ label, System::String^% text) { return InputText(label, text, 0); }
-        static bool InputText(System::String^ label, System::String^% text, int flags);
+        static bool InputText(System::String^ label, System::String^% text) { return InputText(label, text, ImGuiInputTextFlags_::None); }
+        static bool InputText(System::String^ label, System::String^% text, ImGuiInputTextFlags_ flags);
         static bool InputTextMultiline(System::String^ label, System::String^% text) { return InputTextMultiline(label, text, Vector2(0,0)); }
-        static bool InputTextMultiline(System::String^ label, System::String^% text, Vector2 size) { return InputTextMultiline(label, text, size, 0); }
-        static bool InputTextMultiline(System::String^ label, System::String^% text, Vector2 size, int flags);
+        static bool InputTextMultiline(System::String^ label, System::String^% text, Vector2 size) { return InputTextMultiline(label, text, size, ImGuiInputTextFlags_::None); }
+        static bool InputTextMultiline(System::String^ label, System::String^% text, Vector2 size, ImGuiInputTextFlags_ flags);
         static bool InputTextMultiline_Barbaric(System::String^ label, System::String^% text, int capacity) { return InputTextMultiline_Barbaric(label, text, capacity, Vector2(0, 0)); }
         static bool InputTextMultiline_Barbaric(System::String^ label, System::String^% text, int capacity, Vector2 size) { return InputTextMultiline_Barbaric(label, text, capacity, size, 0); }
         static bool InputTextMultiline_Barbaric(System::String^ label, System::String^% text, int capacity, Vector2 size, int flags);
         
-        static bool InputInt(System::String^ label, int% val) { return InputInt(label, val, 0, 100, 0); }
-        static bool InputInt(System::String^ label, int% val, int step, int stepFast) { return InputInt(label, val, step, stepFast, 0); }
-        static bool InputInt(System::String^ label, int% val, int step, int stepFast, int flags);
+        static bool InputInt(System::String^ label, int% val) { return InputInt(label, val, 0, 100, ImGuiInputTextFlags_::None); }
+        static bool InputInt(System::String^ label, int% val, int step, int stepFast) { return InputInt(label, val, step, stepFast, ImGuiInputTextFlags_::None); }
+        static bool InputInt(System::String^ label, int% val, int step, int stepFast, ImGuiInputTextFlags_ extraFlags);
         static bool DragInt(System::String^ label, int% val) { return DragInt(label, val, 1, 0, 0); }
         static bool DragInt(System::String^ label, int% val, int step, int min, int max);
 
-        static bool InputFloat(System::String^ label, float% val) { return InputFloat(label, val, 0.0f, 0.0f, -1, 0); }
-        static bool InputFloat(System::String^ label, float% val, float step, float stepFast) { return InputFloat(label, val, step, stepFast, -1, 0); }
-        static bool InputFloat(System::String^ label, float% val, float step, float stepFast, int decimPrec, int flags);
+        static bool InputFloat(System::String^ label, float% val) { return InputFloat(label, val, 0.0f, 0.0f, -1, ImGuiInputTextFlags_::None); }
+        static bool InputFloat(System::String^ label, float% val, float step, float stepFast) { return InputFloat(label, val, step, stepFast, -1, ImGuiInputTextFlags_::None); }
+        static bool InputFloat(System::String^ label, float% val, float step, float stepFast, int decimPrec, ImGuiInputTextFlags_ extraFlags);
         static bool DragFloat(System::String^ label, float% val) { return DragFloat(label, val, 1.0f, 0.0f, 0.0f); }
         static bool DragFloat(System::String^ label, float% val, float step, float min, float max);
 
@@ -324,10 +375,11 @@ namespace ImGuiCLI {
         static bool InputColor(System::String^ label, Color% v);
 
         static bool Selectable(System::String^ txt, bool selected);
+        static bool Selectable(System::String^ txt, bool selected, ImGuiSelectableFlags_ flags);
 
         // Popups
         static void OpenPopup(System::String^ label);
-        static bool BeginPopup(System::String^ label, int flags);
+        static bool BeginPopup(System::String^ label, ImGuiWindowFlags_ flags);
         static void EndPopup();
         static bool IsPopupOpen(System::String^ label);
         static void CloseCurrentPopup();
@@ -403,13 +455,14 @@ namespace ImGuiCLI {
         static bool ImageButton(Microsoft::Xna::Framework::Graphics::Texture2D^ texture, Vector2 size, Vector2 uv0, Vector2 uv1);
         static bool Checkbox(System::String^ label, bool% selected);
         static bool RadioButton(System::String^ label, bool selected);
-        static bool BeginCombo(System::String^ label, System::String^ preview);
+        static bool BeginCombo(System::String^ label, System::String^ preview) { return BeginCombo(label, preview, ImGuiComboFlags_::None); }
+        static bool BeginCombo(System::String^ label, System::String^ preview, ImGuiComboFlags_ flags);
         static void EndCombo();
-        static bool Combo(System::String^ label, int% currentItem, array<System::String^>^ items) { return Combo(label, currentItem, items, 0); }
-        static bool Combo(System::String^ label, int% currentItem, array<System::String^>^ items, int flags);
+        static bool Combo(System::String^ label, int% currentItem, array<System::String^>^ items) { return Combo(label, currentItem, items, ImGuiComboFlags_::None); }
+        static bool Combo(System::String^ label, int% currentItem, array<System::String^>^ items, ImGuiComboFlags_ flags);
         /// Items must have ToString() to be meaningful.
-        static bool Combo(System::String^ label, int% currentItem, array<System::Object^>^ items) { return Combo(label, currentItem, items, 0); }
-        static bool Combo(System::String^ label, int% currentItem, array<System::Object^>^ items, int flags);
+        static bool Combo(System::String^ label, int% currentItem, array<System::Object^>^ items) { return Combo(label, currentItem, items, ImGuiComboFlags_::None); }
+        static bool Combo(System::String^ label, int% currentItem, array<System::Object^>^ items, ImGuiComboFlags_ flags);
         static bool ListBoxHeader(System::String^ label, Vector2 size);
         static bool ListBoxHeader(System::String^ label, int itemCount, int heightInItems);
         static bool ListBox(System::String^ label, int% currentItem, array<System::String^>^ items);
@@ -478,6 +531,7 @@ namespace ImGuiCLI {
     [System::Flags]
     public enum class DockFlags
     {
+        None = 0,
         NoTabs = 1,
         StartLeft = 1 << 1,
         StartRight = 1 << 2,
@@ -493,10 +547,10 @@ namespace ImGuiCLI {
     public:
         static void RootDock(Vector2 pos, Vector2 size);
         static void ShutdownDock();
-        static bool BeginDock(System::String^ label) { return BeginDock(label, 0); }
-        static bool BeginDock(System::String^ label, int windowFlags) { return BeginDock(label, 0, 0); }
-        static bool BeginDock(System::String^ label, int windowFlags, int dockFlags);
-        static bool BeginDock(System::String^ label, bool% opened, int windowFlags, int dockFlags);
+        static bool BeginDock(System::String^ label) { return BeginDock(label, (ImGuiWindowFlags_)0); }
+        static bool BeginDock(System::String^ label, ImGuiWindowFlags_ windowFlags) { return BeginDock(label, windowFlags, (DockFlags)0); }
+        static bool BeginDock(System::String^ label, ImGuiWindowFlags_ ImGuiWindowFlags_, DockFlags dockFlags);
+        static bool BeginDock(System::String^ label, bool% opened, ImGuiWindowFlags_ windowFlags, DockFlags dockFlags);
         static void EndDock();
         static void SetDockActive();
         static void LoadDock();
