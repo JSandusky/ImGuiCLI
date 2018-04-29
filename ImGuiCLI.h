@@ -177,6 +177,41 @@ namespace ImGuiCLI {
         COUNT
     };
 
+    public ref class ImGuiStyle
+    {
+    public:
+        static Color GetColor(ImGuiCol_ idx);
+        static void SetColor(ImGuiCol_ idx, Color value);
+
+        static property Vector2 TouchExtraPadding { Vector2 get(); void set(Vector2 v); }
+
+        static property Vector2 WindowPadding { Vector2 get(); void set(Vector2 v); }
+        static property float WindowBorderSize { float get(); void set(float v); }
+        static property float WindowRounding { float get(); void set(float v); }
+
+        static property float PopupBorderSize { float get(); void set(float v); }
+        static property float PopupRounding { float get(); void set(float v); }
+
+        static property Vector2 FramePadding { Vector2 get(); void set(Vector2 v); }
+        static property float FrameBorderSize { float get(); void set(float v); }
+        static property float FrameRounding { float get(); void set(float v); }
+
+        static property float ScrollbarSize { float get(); void set(float v); }
+        static property float ScrollbarRounding { float get(); void set(float v); }
+
+        static property float ChildBorderSize { float get(); void set(float v); }
+        static property float ChildRounding { float get(); void set(float v); }
+
+        static property float GrabRounding { float get(); void set(float v); }
+        static property float GrabMinSize { float get(); void set(float v); }
+
+        static property float ColumnsMinSpacing { float get(); void set(float v); }
+
+        static property Vector2 ItemInnerSpacing { Vector2 get(); void set(Vector2 v); }
+        static property Vector2 ItemSpacing { Vector2 get(); void set(Vector2 v); }
+        static property float IndentSpacing { float get(); void set(float v); }
+    };
+
     public ref class ImGuiIO
     {
     public:
@@ -251,12 +286,16 @@ namespace ImGuiCLI {
         static void SetScrollHere(float center_y_ratio);
 
         static bool CollapsingHeader(System::String^ title);
+        static bool CollapsingHeader(System::String^ title, bool% opened);
 
         static bool InputText(System::String^ label, System::String^% text) { return InputText(label, text, 0); }
         static bool InputText(System::String^ label, System::String^% text, int flags);
         static bool InputTextMultiline(System::String^ label, System::String^% text) { return InputTextMultiline(label, text, Vector2(0,0)); }
         static bool InputTextMultiline(System::String^ label, System::String^% text, Vector2 size) { return InputTextMultiline(label, text, size, 0); }
         static bool InputTextMultiline(System::String^ label, System::String^% text, Vector2 size, int flags);
+        static bool InputTextMultiline_Barbaric(System::String^ label, System::String^% text, int capacity) { return InputTextMultiline_Barbaric(label, text, capacity, Vector2(0, 0)); }
+        static bool InputTextMultiline_Barbaric(System::String^ label, System::String^% text, int capacity, Vector2 size) { return InputTextMultiline_Barbaric(label, text, capacity, size, 0); }
+        static bool InputTextMultiline_Barbaric(System::String^ label, System::String^% text, int capacity, Vector2 size, int flags);
         
         static bool InputInt(System::String^ label, int% val) { return InputInt(label, val, 0, 100, 0); }
         static bool InputInt(System::String^ label, int% val, int step, int stepFast) { return InputInt(label, val, step, stepFast, 0); }
@@ -273,9 +312,15 @@ namespace ImGuiCLI {
         static bool InputFloat2(System::String^ label, Vector2% v);
         static bool InputFloat3(System::String^ label, Vector3% v);
         static bool InputFloat4(System::String^ label, Vector4% v);
-        static bool DragFloat2(System::String^ label, Vector2% v);
-        static bool DragFloat3(System::String^ label, Vector3% v);
-        static bool DragFloat4(System::String^ label, Vector4% v);
+        static bool DragFloat2(System::String^ label, Vector2% v) { return DragFloat2(label, v, 1.0f, 0.0f, 0.0f); }
+        static bool DragFloat3(System::String^ label, Vector3% v) { return DragFloat3(label, v, 1.0f, 0.0f, 0.0f); }
+        static bool DragFloat4(System::String^ label, Vector4% v) { return DragFloat4(label, v, 1.0f, 0.0f, 0.0f); }
+        static bool DragFloat2(System::String^ label, Vector2% v, float speed) { return DragFloat2(label, v, speed, 0.0f, 0.0f); }
+        static bool DragFloat3(System::String^ label, Vector3% v, float speed) { return DragFloat3(label, v, speed, 0.0f, 0.0f); }
+        static bool DragFloat4(System::String^ label, Vector4% v, float speed) { return DragFloat4(label, v, speed, 0.0f, 0.0f); }
+        static bool DragFloat2(System::String^ label, Vector2% v, float speed, float min, float max);
+        static bool DragFloat3(System::String^ label, Vector3% v, float speed, float min, float max);
+        static bool DragFloat4(System::String^ label, Vector4% v, float speed, float min, float max);
         static bool InputColor(System::String^ label, Color% v);
 
         static bool Selectable(System::String^ txt, bool selected);
@@ -345,6 +390,7 @@ namespace ImGuiCLI {
         static void PushID(int id);
         static void PopID();
         
+        static void Label(System::String^ label, System::String^ text);
         static void Text(System::String^ text);
         static bool Button(System::String^ label);
         static bool Button(System::String^ label, Vector2 size);
@@ -359,6 +405,17 @@ namespace ImGuiCLI {
         static bool RadioButton(System::String^ label, bool selected);
         static bool BeginCombo(System::String^ label, System::String^ preview);
         static void EndCombo();
+        static bool Combo(System::String^ label, int% currentItem, array<System::String^>^ items) { return Combo(label, currentItem, items, 0); }
+        static bool Combo(System::String^ label, int% currentItem, array<System::String^>^ items, int flags);
+        /// Items must have ToString() to be meaningful.
+        static bool Combo(System::String^ label, int% currentItem, array<System::Object^>^ items) { return Combo(label, currentItem, items, 0); }
+        static bool Combo(System::String^ label, int% currentItem, array<System::Object^>^ items, int flags);
+        static bool ListBoxHeader(System::String^ label, Vector2 size);
+        static bool ListBoxHeader(System::String^ label, int itemCount, int heightInItems);
+        static bool ListBox(System::String^ label, int% currentItem, array<System::String^>^ items);
+        /// Items must have ToString() to be meaningful.
+        static bool ListBox(System::String^ label, int% currentItem, array<System::Object^>^ items);
+        static void ListBoxFooter();
         static void Bullet();
 
         static void Columns(int ct);
@@ -375,6 +432,10 @@ namespace ImGuiCLI {
         static bool BeginMenu(System::String^ label, bool enabled);
         static void EndMenu();
         static bool MenuItem(System::String^ label);
+        static bool MenuItem(System::String^ label, bool% selected) { return MenuItem(label, selected, true); }
+        static bool MenuItem(System::String^ label, bool% selected, bool enabled);
+        static bool MenuItem(System::String^ label, System::String^ shortCut, bool% selected) { return MenuItem(label, shortCut, selected, true); }
+        static bool MenuItem(System::String^ label, System::String^ shortCut, bool% selected, bool enabled);
 
         // Clipping
         static void PushClipRect(Vector2 min, Vector2 max, bool intersect);
@@ -392,9 +453,15 @@ namespace ImGuiCLI {
         static bool RangeSliderFloat(System::String^ label, float% min, float% max, float vMin, float vMax);
         static bool BitField(System::String^ label, unsigned% bits);
         static bool BitField(System::String^ label, unsigned% bits, unsigned% hitBit);
-        static bool DragFloatN_Colored(System::String^ label, Vector2% v);
-        static bool DragFloatN_Colored(System::String^ label, Vector3% v);
-        static bool DragFloatN_Colored(System::String^ label, Vector4% v);
+        static bool DragFloatN_Colored(System::String^ label, Vector2% v) { return DragFloatN_Colored(label, v, 1.0f, 0.0f, 0.0f); }
+        static bool DragFloatN_Colored(System::String^ label, Vector3% v) { return DragFloatN_Colored(label, v, 1.0f, 0.0f, 0.0f); }
+        static bool DragFloatN_Colored(System::String^ label, Vector4% v) { return DragFloatN_Colored(label, v, 1.0f, 0.0f, 0.0f); }
+        static bool DragFloatN_Colored(System::String^ label, Vector2% v, float speed) { return DragFloatN_Colored(label, v, speed, 0.0f, 0.0f); }
+        static bool DragFloatN_Colored(System::String^ label, Vector3% v, float speed) { return DragFloatN_Colored(label, v, speed, 0.0f, 0.0f); }
+        static bool DragFloatN_Colored(System::String^ label, Vector4% v, float speed) { return DragFloatN_Colored(label, v, speed, 0.0f, 0.0f); }
+        static bool DragFloatN_Colored(System::String^ label, Vector2% v, float speed, float min, float max);
+        static bool DragFloatN_Colored(System::String^ label, Vector3% v, float speed, float min, float max);
+        static bool DragFloatN_Colored(System::String^ label, Vector4% v, float speed, float min, float max);
 
         static void BeginTabBar(System::String^ id);
         static void EndTabBar();

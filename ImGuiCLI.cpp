@@ -56,7 +56,6 @@ namespace ImGuiCLI
     {
         return ImGui::Begin(ToSTLString(title).c_str(), 0x0, winFlags);
     }
-
     bool ImGuiCli::Begin(System::String^ title, bool% open, int winFlags)
     {
         bool o = open;
@@ -64,7 +63,6 @@ namespace ImGuiCLI
         open = o;
         return ret;
     }
-
     void ImGuiCli::End()
     {
         return ImGui::End();
@@ -128,9 +126,15 @@ namespace ImGuiCLI
     void ImGuiCli::SetScrollY(float scroll_y) { ImGui::SetScrollY(scroll_y); }
     void ImGuiCli::SetScrollHere(float center_y_ratio) { ImGui::SetScrollHere(center_y_ratio); }
 
-    bool ImGuiCli::CollapsingHeader(System::String^ label)
-    {
-        return ImGui::CollapsingHeader(LBL);
+    bool ImGuiCli::CollapsingHeader(System::String^ label) { return ImGui::CollapsingHeader(LBL); }
+    bool ImGuiCli::CollapsingHeader(System::String^ label, bool% opened) {
+        bool v = opened;
+        if (ImGui::CollapsingHeader(LBL, &v))
+        {
+            opened = v;
+            return true;
+        }
+        return false;
     }
 
     bool ImGuiCli::InputText(System::String^ label, System::String^% text, int flags)
@@ -150,6 +154,27 @@ namespace ImGuiCLI
         if (ImGui::InputTextMultiline(LBL, BUFF, 4096, ImVec2(size.X, size.Y), flags))
         {
             text = gcnew System::String(BUFF);
+            return true;
+        }
+        return false;
+    }
+
+    bool ImGuiCli::InputTextMultiline_Barbaric(System::String^ label, System::String^% text, int capacity, Vector2 size, int flags)
+    {
+        // resize as needed
+        static char* barbBuff = nullptr;
+        static size_t barbBuffSize = 0;
+        if (barbBuff == nullptr || barbBuffSize < capacity)
+        {
+            if (barbBuff)
+                delete[] barbBuff;
+            barbBuff = new char[barbBuffSize = capacity];
+        }
+        memset(barbBuff, 0, barbBuffSize);
+        CopyStrBuff(text, barbBuff);
+        if (ImGui::InputTextMultiline(LBL, barbBuff, capacity, ImVec2(size.X, size.Y), flags))
+        {
+            text = gcnew System::String(barbBuff);
             return true;
         }
         return false;
@@ -232,9 +257,9 @@ namespace ImGuiCLI
         return false;
     }
 
-    bool ImGuiCli::DragFloat2(System::String^ label, Vector2% val) { 
+    bool ImGuiCli::DragFloat2(System::String^ label, Vector2% val, float speed, float min, float max) {
         Vector2 v = val;
-        if (ImGui::DragFloat2(LBL, &v.X))
+        if (ImGui::DragFloat2(LBL, &v.X, speed, min, max))
         {
             val = v;
             return true;
@@ -242,9 +267,9 @@ namespace ImGuiCLI
         return false;
     }
 
-    bool ImGuiCli::DragFloat3(System::String^ label, Vector3% val) {
+    bool ImGuiCli::DragFloat3(System::String^ label, Vector3% val, float speed, float min, float max) {
         Vector3 v = val;
-        if (ImGui::DragFloat3(LBL, &v.X))
+        if (ImGui::DragFloat3(LBL, &v.X, speed, min, max))
         {
             val = v;
             return true;
@@ -252,9 +277,9 @@ namespace ImGuiCLI
         return false;
     }
     
-    bool ImGuiCli::DragFloat4(System::String^ label, Vector4% val) {
+    bool ImGuiCli::DragFloat4(System::String^ label, Vector4% val, float speed, float min, float max) {
         Vector4 v = val;
-        if (ImGui::DragFloat4(LBL, &v.X))
+        if (ImGui::DragFloat4(LBL, &v.X, speed, min, max))
         {
             val = v;
             return true;
@@ -354,6 +379,7 @@ namespace ImGuiCLI
     void ImGuiCli::PushID(int id) { ImGui::PushID(id); }
     void ImGuiCli::PopID() { ImGui::PopID(); }
 
+    void ImGuiCli::Label(System::String^ label, System::String^ text) { ImGui::LabelText(LBL, ToSTLString(text).c_str()); }
     void ImGuiCli::Text(System::String^ label) { return ImGui::Text(LBL); }
     bool ImGuiCli::Button(System::String^ label) { return ImGui::Button(LBL); }
     bool ImGuiCli::Button(System::String^ label, Vector2 size) { return ImGui::Button(LBL, ImVec2(size.X, size.Y)); }
@@ -361,11 +387,11 @@ namespace ImGuiCLI
     bool ImGuiCli::InvisibleButon(System::String^ label, Vector2 size) { return ImGui::InvisibleButton(LBL, ImVec2(size.X, size.Y)); }
     void ImGuiCli::Image(Microsoft::Xna::Framework::Graphics::Texture2D^ texture, Vector2 size)
     {
-        ImGui::Image(texture->GetSharedHandle().ToPointer(), ImVec2(size.X, size.Y));
+        ImGui::Image(texture->GetNativeHandle().ToPointer(), ImVec2(size.X, size.Y));
     }
     void ImGuiCli::Image(Microsoft::Xna::Framework::Graphics::Texture2D^ texture, Vector2 size, Vector2 uv0, Vector2 uv1)
     {
-        ImGui::Image(texture->GetSharedHandle().ToPointer(), ImVec2(size.X, size.Y), ImVec2(uv0.X, uv0.Y), ImVec2(uv1.X, uv1.Y));
+        ImGui::Image(texture->GetNativeHandle().ToPointer(), ImVec2(size.X, size.Y), ImVec2(uv0.X, uv0.Y), ImVec2(uv1.X, uv1.Y));
     }
     void ImGuiCli::Image(Microsoft::Xna::Framework::Graphics::Texture2D^ texture, Vector2 size, Vector2 uv0, Vector2 uv1, Color tint)
     {
@@ -392,6 +418,111 @@ namespace ImGuiCLI
     bool ImGuiCli::BeginCombo(System::String^ label, System::String^ preview) { return ImGui::BeginCombo(LBL, ToSTLString(preview).c_str()); }
     void ImGuiCli::EndCombo() { ImGui::EndCombo(); }
 
+    bool ImGuiCli::Combo(System::String^ label, int% currentItem, array<System::String^>^ items, int flags)
+    {
+        if (!ImGui::BeginCombo(LBL, ToSTLString(items[currentItem]).c_str(), flags))
+            return false;
+
+        bool value_changed = false;
+        for (int i = 0; i < items->Length; i++)
+        {
+            ImGui::PushID((void*)(intptr_t)i);
+            const bool item_selected = (i == currentItem);
+            if (ImGui::Selectable(ToSTLString(items[i]).c_str(), item_selected))
+            {
+                value_changed = true;
+                currentItem = i;
+            }
+            if (item_selected)
+                ImGui::SetItemDefaultFocus();
+            ImGui::PopID();
+        }
+
+        ImGui::EndCombo();
+        return value_changed;
+    }
+    
+    bool ImGuiCli::Combo(System::String^ label, int% currentItem, array<System::Object^>^ items, int flags)
+    {
+        if (!ImGui::BeginCombo(LBL, ToSTLString(items[currentItem]->ToString()).c_str(), flags))
+            return false;
+
+        bool value_changed = false;
+        for (int i = 0; i < items->Length; i++)
+        {
+            ImGui::PushID((void*)(intptr_t)i);
+            const bool item_selected = (i == currentItem);
+            if (ImGui::Selectable(ToSTLString(items[i]->ToString()).c_str(), item_selected))
+            {
+                value_changed = true;
+                currentItem = i;
+            }
+            if (item_selected)
+                ImGui::SetItemDefaultFocus();
+            ImGui::PopID();
+        }
+
+        ImGui::EndCombo();
+        return value_changed;
+    }
+
+    bool ImGuiCli::ListBoxHeader(System::String^ label, Vector2 size)
+    {
+        return ImGui::ListBoxHeader(LBL, ImVec2(size.X, size.Y));
+    }
+    bool ImGuiCli::ListBoxHeader(System::String^ label, int itemCount, int heightInItems)
+    {
+        return ImGui::ListBoxHeader(LBL, itemCount, heightInItems);
+    }
+    bool ImGuiCli::ListBox(System::String^ label, int% currentItem, array<System::String^>^ items)
+    {
+        if (!ImGui::ListBoxHeader(LBL, items->Length, -1))
+            return false;
+
+        bool value_changed = false;
+        for (int i = 0; i < items->Length; i++)
+        {
+            const bool item_selected = (i == currentItem);
+                        
+            ImGui::PushID(i);
+            if (ImGui::Selectable(ToSTLString(items[i]).c_str(), item_selected))
+            {
+                currentItem = i;
+                value_changed = true;
+            }
+            ImGui::PopID();
+        }
+
+        ImGui::ListBoxFooter();
+        return value_changed;
+    }
+    bool ImGuiCli::ListBox(System::String^ label, int% currentItem, array<System::Object^>^ items)
+    {
+        if (!ImGui::ListBoxHeader(LBL, items->Length, -1))
+            return false;
+
+        bool value_changed = false;
+        for (int i = 0; i < items->Length; i++)
+        {
+            const bool item_selected = (i == currentItem);
+
+            ImGui::PushID(i);
+            if (ImGui::Selectable(ToSTLString(items[i]->ToString()).c_str(), item_selected))
+            {
+                currentItem = i;
+                value_changed = true;
+            }
+            ImGui::PopID();
+        }
+
+        ImGui::ListBoxFooter();
+        return value_changed;
+    }
+    void ImGuiCli::ListBoxFooter()
+    {
+        ImGui::ListBoxFooter();
+    }
+
     void ImGuiCli::Bullet() { ImGui::Bullet(); }
 
     void ImGuiCli::Columns(int ct) { ImGui::Columns(ct); }
@@ -408,6 +539,26 @@ namespace ImGuiCLI
     bool ImGuiCli::BeginMenu(System::String^ label, bool enabled) { return ImGui::BeginMenu(LBL, enabled); }
     void ImGuiCli::EndMenu() { ImGui::EndMenu(); }
     bool ImGuiCli::MenuItem(System::String^ label) { return ImGui::MenuItem(LBL); }
+    bool ImGuiCli::MenuItem(System::String^ label, bool% selected, bool enabled) 
+    {
+        bool r = selected;
+        if (ImGui::MenuItem(LBL, 0x0, &r, enabled))
+        {
+            selected = r;
+            return true;
+        }
+        return false;
+    }
+    bool ImGuiCli::MenuItem(System::String^ label, System::String^ shortCut, bool% selected, bool enabled)
+    {
+        bool r = selected;
+        if (ImGui::MenuItem(LBL, ToSTLString(shortCut).c_str(), &r, enabled))
+        {
+            selected = r;
+            return true;
+        }
+        return false;
+    }
 
     void ImGuiCli::PushClipRect(Vector2 min, Vector2 max, bool intersect) { ImGui::PushClipRect(ImVec2(min.X, min.Y), ImVec2(max.X, max.Y), intersect); }
     void ImGuiCli::PopClipRect() { ImGui::PopClipRect(); }
@@ -448,30 +599,30 @@ namespace ImGuiCLI
         }
         return false;
     }
-    bool ImGuiEx::DragFloatN_Colored(System::String^ label, Vector2% val)
+    bool ImGuiEx::DragFloatN_Colored(System::String^ label, Vector2% val, float speed, float min, float max)
     {
         Vector2 v = val;
-        if (ImGui::DragFloatN_Colored(LBL, &v.X, 2))
+        if (ImGui::DragFloatN_Colored(LBL, &v.X, 2, speed, min, max))
         {
             val = v;
             return true;
         }
         return false;
     }
-    bool ImGuiEx::DragFloatN_Colored(System::String^ label, Vector3% val)
+    bool ImGuiEx::DragFloatN_Colored(System::String^ label, Vector3% val, float speed, float min, float max)
     {
         Vector3 v = val;
-        if (ImGui::DragFloatN_Colored(LBL, &v.X, 3))
+        if (ImGui::DragFloatN_Colored(LBL, &v.X, 3, speed, min, max))
         {
             val = v;
             return true;
         }
         return false;
     }
-    bool ImGuiEx::DragFloatN_Colored(System::String^ label, Vector4% val)
+    bool ImGuiEx::DragFloatN_Colored(System::String^ label, Vector4% val, float speed, float min, float max)
     {
         Vector4 v = val;
-        if (ImGui::DragFloatN_Colored(LBL, &v.X, 4))
+        if (ImGui::DragFloatN_Colored(LBL, &v.X, 4, speed, min, max))
         {
             val = v;
             return true;
@@ -543,3 +694,91 @@ void ImGuiCLI::ImGuiDock::EndDock() { ImGui::EndDock(); }
 void ImGuiCLI::ImGuiDock::SetDockActive() { ImGui::SetDockActive(); }
 void ImGuiCLI::ImGuiDock::LoadDock() { ImGui::LoadDock(); }
 void ImGuiCLI::ImGuiDock::SaveDock() { ImGui::SaveDock(); }
+
+/// ImGuiStyle
+Vector2 ImGuiCLI::ImGuiStyle::WindowPadding::get()
+{
+    auto v = ImGui::GetStyle().WindowPadding;
+    return Vector2(v.x, v.y);
+}
+void ImGuiCLI::ImGuiStyle::WindowPadding::set(Vector2 v)
+{
+    ImGui::GetStyle().WindowPadding = ImVec2(v.X, v.Y);
+}
+float ImGuiCLI::ImGuiStyle::WindowBorderSize::get() { return ImGui::GetStyle().WindowBorderSize; }
+void ImGuiCLI::ImGuiStyle::WindowBorderSize::set(float v) { ImGui::GetStyle().WindowBorderSize = v; }
+float ImGuiCLI::ImGuiStyle::WindowRounding::get() { return ImGui::GetStyle().WindowRounding; }
+void ImGuiCLI::ImGuiStyle::WindowRounding::set(float v) { ImGui::GetStyle().WindowRounding = v; }
+
+Vector2 ImGuiCLI::ImGuiStyle::FramePadding::get()
+{
+    auto v = ImGui::GetStyle().FramePadding;
+    return Vector2(v.x, v.y);
+}
+void ImGuiCLI::ImGuiStyle::FramePadding::set(Vector2 v) { ImGui::GetStyle().FramePadding = ImVec2(v.X, v.Y); }
+float ImGuiCLI::ImGuiStyle::FrameBorderSize::get() { return ImGui::GetStyle().FrameBorderSize; }
+void ImGuiCLI::ImGuiStyle::FrameBorderSize::set(float v) { ImGui::GetStyle().FrameBorderSize = v; }
+float ImGuiCLI::ImGuiStyle::FrameRounding::get() { return ImGui::GetStyle().FrameRounding; }
+void ImGuiCLI::ImGuiStyle::FrameRounding::set(float v) { ImGui::GetStyle().FrameRounding = v; }
+
+float ImGuiCLI::ImGuiStyle::ChildBorderSize::get() { return ImGui::GetStyle().ChildBorderSize; }
+void ImGuiCLI::ImGuiStyle::ChildBorderSize::set(float v) { ImGui::GetStyle().ChildBorderSize = v; }
+float ImGuiCLI::ImGuiStyle::ChildRounding::get() { return ImGui::GetStyle().ChildRounding; }
+void ImGuiCLI::ImGuiStyle::ChildRounding::set(float v) { ImGui::GetStyle().ChildRounding = v; }
+
+float ImGuiCLI::ImGuiStyle::GrabRounding::get() { return ImGui::GetStyle().GrabRounding; }
+void ImGuiCLI::ImGuiStyle::GrabRounding::set(float v) { ImGui::GetStyle().GrabRounding = v; }
+float ImGuiCLI::ImGuiStyle::GrabMinSize::get() { return ImGui::GetStyle().GrabMinSize; }
+void ImGuiCLI::ImGuiStyle::GrabMinSize::set(float v) { ImGui::GetStyle().GrabMinSize = v; }
+
+Vector2 ImGuiCLI::ImGuiStyle::ItemInnerSpacing::get()
+{
+    auto v = ImGui::GetStyle().ItemInnerSpacing;
+    return Vector2(v.x, v.y);
+}
+void ImGuiCLI::ImGuiStyle::ItemInnerSpacing::set(Vector2 v)
+{
+    ImGui::GetStyle().ItemInnerSpacing = ImVec2(v.X, v.Y);
+}
+Vector2 ImGuiCLI::ImGuiStyle::ItemSpacing::get()
+{
+    auto v = ImGui::GetStyle().ItemSpacing;
+    return Vector2(v.x, v.y);
+}
+void ImGuiCLI::ImGuiStyle::ItemSpacing::set(Vector2 v)
+{
+    ImGui::GetStyle().ItemSpacing = ImVec2(v.X, v.Y);
+}
+float ImGuiCLI::ImGuiStyle::IndentSpacing::get() { return ImGui::GetStyle().IndentSpacing; }
+void ImGuiCLI::ImGuiStyle::IndentSpacing::set(float v) { ImGui::GetStyle().IndentSpacing = v; }
+
+float ImGuiCLI::ImGuiStyle::ScrollbarRounding::get() { return ImGui::GetStyle().ScrollbarRounding; }
+void ImGuiCLI::ImGuiStyle::ScrollbarRounding::set(float v) { ImGui::GetStyle().ScrollbarRounding = v; }
+float ImGuiCLI::ImGuiStyle::ScrollbarSize::get() { return ImGui::GetStyle().ScrollbarSize; }
+void ImGuiCLI::ImGuiStyle::ScrollbarSize::set(float v) { ImGui::GetStyle().ScrollbarSize = v; }
+
+float ImGuiCLI::ImGuiStyle::PopupRounding::get() { return ImGui::GetStyle().PopupRounding; }
+void ImGuiCLI::ImGuiStyle::PopupRounding::set(float v) { ImGui::GetStyle().PopupRounding = v; }
+float ImGuiCLI::ImGuiStyle::PopupBorderSize::get() { return ImGui::GetStyle().PopupBorderSize; }
+void ImGuiCLI::ImGuiStyle::PopupBorderSize::set(float v) { ImGui::GetStyle().PopupBorderSize = v; }
+
+float ImGuiCLI::ImGuiStyle::ColumnsMinSpacing::get() { return ImGui::GetStyle().ColumnsMinSpacing; }
+void ImGuiCLI::ImGuiStyle::ColumnsMinSpacing::set(float v) { ImGui::GetStyle().ColumnsMinSpacing = v; }
+
+Vector2 ImGuiCLI::ImGuiStyle::TouchExtraPadding::get() 
+{ 
+    auto v = ImGui::GetStyle().TouchExtraPadding; 
+    return Vector2(v.x, v.y);
+}
+void ImGuiCLI::ImGuiStyle::TouchExtraPadding::set(Vector2 v) { ImGui::GetStyle().TouchExtraPadding = ImVec2(v.X, v.Y); }
+
+Color ImGuiCLI::ImGuiStyle::GetColor(ImGuiCol_ idx)
+{
+    ImVec4 v = ImGui::GetStyle().Colors[(int)idx];
+    return Color(v.x, v.y, v.z, v.w);
+}
+void ImGuiCLI::ImGuiStyle::SetColor(ImGuiCol_ idx, Color value)
+{
+    auto v = value.ToVector4();
+    ImGui::GetStyle().Colors[(int)idx] = ImVec4(v.X, v.Y, v.Z, v.W);
+}

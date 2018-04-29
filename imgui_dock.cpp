@@ -521,7 +521,7 @@ struct DockContext
 
 	bool dockSlots(Dock& dock, Dock* dest_dock, const ImRect& rect, bool on_border)
 	{
-		ImDrawList* canvas = GetWindowDrawList();
+		ImDrawList* canvas = GetOverlayDrawList();
 		ImU32 color = GetColorU32(ImGuiCol_Button);
 		ImU32 color_hovered = (GetColorU32(ImGuiCol_ButtonHovered) & 0x00ffffff) | 0x60000000;
 		ImVec2 mouse_pos = GetIO().MousePos;
@@ -1055,7 +1055,7 @@ struct DockContext
 				opened,
 				dock.size,
 				dock.status == Status_Dragged ? 0.3f : 1.0f,
-				ImGuiWindowFlags_NoCollapse | extra_flags);
+				ImGuiWindowFlags_NoCollapse | extra_flags | ImGuiWindowFlags_ResizeFromAnySide);
             m_end_action = EndAction_End;
 
             ImGuiContext& g = *GImGui;
