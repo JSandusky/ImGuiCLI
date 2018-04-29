@@ -569,6 +569,12 @@ namespace ImGuiCLI
     bool ImGuiCli::TreeNodeEx(System::String^ label, int flags) { return ImGui::TreeNodeEx(LBL, flags); }
     void ImGuiCli::TreePop() { ImGui::TreePop(); }
 
+    // Utilties / Demo
+    void ImGuiCli::ShowUserGuide() { ImGui::ShowUserGuide(); }
+    void ImGuiCli::ShowDemoWindow() { ImGui::ShowDemoWindow(); }
+    void ImGuiCli::ShowMetricsWindow() { ImGui::ShowMetricsWindow(); }
+    void ImGuiCli::ShowStyleEditor() { ImGui::ShowStyleEditor(); }
+
     bool ImGuiEx::RangeSliderFloat(System::String^ label, float% min, float% max, float vMin, float vMax)
     {
         float mi = min; float mx = max;
@@ -783,3 +789,7 @@ void ImGuiCLI::ImGuiStyle::SetColor(ImGuiCol_ idx, Color value)
     auto v = value.ToVector4();
     ImGui::GetStyle().Colors[(int)idx] = ImVec4(v.X, v.Y, v.Z, v.W);
 }
+
+void ImGuiCLI::ImGuiStyle::StyleColorsLight() { ImGui::StyleColorsLight(); }
+void ImGuiCLI::ImGuiStyle::StyleColorsClassic() { ImGui::StyleColorsClassic(); }
+void ImGuiCLI::ImGuiStyle::StyleColorsDark() { ImGui::StyleColorsDark(); }

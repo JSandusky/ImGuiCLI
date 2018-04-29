@@ -261,6 +261,10 @@ namespace ImGuiCLI {
         static property Vector2 ItemInnerSpacing { Vector2 get(); void set(Vector2 v); }
         static property Vector2 ItemSpacing { Vector2 get(); void set(Vector2 v); }
         static property float IndentSpacing { float get(); void set(float v); }
+
+        static void StyleColorsLight();
+        static void StyleColorsClassic();
+        static void StyleColorsDark();
     };
 
     public ref class ImGuiIO
@@ -498,6 +502,12 @@ namespace ImGuiCLI {
         static bool TreeNode(System::String^ label);
         static bool TreeNodeEx(System::String^ label, int flags);
         static void TreePop();
+
+        // Demo / Window utils
+        static void ShowUserGuide();
+        static void ShowDemoWindow();
+        static void ShowMetricsWindow();
+        static void ShowStyleEditor();
 	};
 
     public ref class ImGuiEx
