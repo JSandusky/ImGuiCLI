@@ -566,4 +566,20 @@ namespace ImGuiCLI {
         static void LoadDock();
         static void SaveDock();
     };
+
+    public ref class ImGuiTextFilter
+    {
+    public:
+        ImGuiTextFilter();
+        ImGuiTextFilter(System::String^ defaultFilter);
+        ~ImGuiTextFilter();
+
+        bool Draw();
+        bool Draw(System::String^ label);
+
+        property bool IsActive { bool get(); }
+        bool PassFilter(System::String^ text);
+    private:
+        void* data_;
+    };
 }

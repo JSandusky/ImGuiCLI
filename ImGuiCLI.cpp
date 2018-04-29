@@ -793,3 +793,38 @@ void ImGuiCLI::ImGuiStyle::SetColor(ImGuiCol_ idx, Color value)
 void ImGuiCLI::ImGuiStyle::StyleColorsLight() { ImGui::StyleColorsLight(); }
 void ImGuiCLI::ImGuiStyle::StyleColorsClassic() { ImGui::StyleColorsClassic(); }
 void ImGuiCLI::ImGuiStyle::StyleColorsDark() { ImGui::StyleColorsDark(); }
+
+ImGuiCLI::ImGuiTextFilter::ImGuiTextFilter()
+{
+    data_ = (void*)new ::ImGuiTextFilter();
+}
+
+ImGuiCLI::ImGuiTextFilter::ImGuiTextFilter(System::String^ defaultFilter)
+{
+    data_ = (void*)new ::ImGuiTextFilter(ToSTLString(defaultFilter).c_str());
+}
+
+ImGuiCLI::ImGuiTextFilter::~ImGuiTextFilter()
+{
+    if (data_)
+        delete ((::ImGuiTextFilter*)data_);
+    data_ = nullptr;
+}
+
+bool ImGuiCLI::ImGuiTextFilter::Draw()
+{
+    return ((::ImGuiTextFilter*)data_)->Draw();
+}
+bool ImGuiCLI::ImGuiTextFilter::Draw(System::String^ label)
+{
+    return ((::ImGuiTextFilter*)data_)->Draw(LBL);
+}
+
+bool ImGuiCLI::ImGuiTextFilter::IsActive::get()
+{
+    return ((::ImGuiTextFilter*)data_)->IsActive();
+}
+bool ImGuiCLI::ImGuiTextFilter::PassFilter(System::String^ label)
+{
+    return ((::ImGuiTextFilter*)data_)->PassFilter(LBL);
+}
