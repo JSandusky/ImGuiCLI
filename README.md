@@ -8,7 +8,9 @@ Mashes the Dear ImGui Win32 DirectX11 demo into a C++/CLI wrapper. The crap toss
 
 `class ImGuiCli` can be used with vanilla ImGui (some extension types will need to be ripped out, nothing major). Located in ImGuiCLI.h/.cpp
 
-Mashing the demo is fairly advantageous given the WIP status of the Viewports branch. Updating to the latest only takes around 15 minutes to merge.
+Mashing the demo is fairly advantageous given the WIP status of the Viewports branch. Updating to the latest only takes around 15 minutes to merge. Once Viewports are part of core Dear ImGui, and thus likely stable, it would be more appropriate to do a proper implementation.
+
+If you don't want to mess with tweaking MonoGame or didn't install C++ support (and thus C++/CLI) with Visual Studio there are Win32 x86 binaries for basic messing around with to see how it all behaves: https://github.com/JSandusky/ImGuiCLI/releases
 
 ## Deviations
 
