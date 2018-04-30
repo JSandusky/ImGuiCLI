@@ -211,6 +211,7 @@ namespace ImGuiCLI
     void ImGuiContext::RecordState()
     {
         g_pd3dDeviceContext->OMGetRenderTargets(4, previousTargets, &previousDepth);
+        g_pd3dDeviceContext->RSGetViewports(&previousNumViewports, nullptr);
         g_pd3dDeviceContext->RSGetViewports(&previousNumViewports, previousViewports);
     }
     void ImGuiContext::RestoreState()
