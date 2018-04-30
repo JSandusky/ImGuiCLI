@@ -23,6 +23,11 @@ namespace ImGuiCLI
         void RenderAndDraw(System::IntPtr renderTarget);
 
         void ResizeMain(int width, int height, System::IntPtr mainRenderTarget);
+
+    private:
+        /// Record OM state that, some of it is my responsibility, not Dear ImGui's
+        void RecordState();
+        void RestoreState();
     };
 
 }

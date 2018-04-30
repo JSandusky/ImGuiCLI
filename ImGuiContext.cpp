@@ -169,8 +169,9 @@ namespace ImGuiCLI
         extern void ImGui_ImplDX11_RenderDrawData(ImDrawData*);
         // Rendering
         ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-        g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
-        g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, (float*)&clear_color);
+        
+        RecordState();
+        
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
@@ -180,7 +181,7 @@ namespace ImGuiCLI
             ImGui::RenderPlatformWindowsDefault();
         }
 
-        g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
+        RestoreState();
     }
 
     void ImGuiContext::Draw(System::IntPtr renderTarget)
@@ -188,18 +189,38 @@ namespace ImGuiCLI
         g_mainRenderTargetView = (ID3D11RenderTargetView*)renderTarget.ToPointer();
         extern void ImGui_ImplDX11_RenderDrawData(ImDrawData*);
 
-        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-        g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
-        g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, (float*)&clear_color);
+        RecordState();
 
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
         if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
             ImGui::RenderPlatformWindowsDefault();
-        g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
+        
+        RestoreState();
     }
 
     void ImGuiContext::ResizeMain(int width, int height, System::IntPtr mainRenderTarget)
     {
 
+    }
+    
+    static ID3D11RenderTargetView* previousTargets[4];
+    static ID3D11DepthStencilView* previousDepth;
+    static unsigned previousNumViewports;
+    static D3D11_VIEWPORT previousViewports[4];
+    //static ID3DD
+    void ImGuiContext::RecordState()
+    {
+        g_pd3dDeviceContext->OMGetRenderTargets(4, previousTargets, &previousDepth);
+        g_pd3dDeviceContext->RSGetViewports(&previousNumViewports, previousViewports);
+    }
+    void ImGuiContext::RestoreState()
+    {
+        // count number of non null views, passing a bad count will mess stuff up
+        int targetCt = 0;
+        for (int i = 0; i < 4; ++i)
+            if (previousTargets[i] != nullptr)
+                ++targetCt;
+        g_pd3dDeviceContext->OMSetRenderTargets(targetCt, previousTargets, previousDepth);
+        g_pd3dDeviceContext->RSSetViewports(previousNumViewports, previousViewports);
     }
 }
