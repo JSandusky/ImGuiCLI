@@ -205,7 +205,7 @@ namespace ImGuiCLI
     
     static ID3D11RenderTargetView* previousTargets[4];
     static ID3D11DepthStencilView* previousDepth;
-    static unsigned previousNumViewports;
+    static unsigned previousNumViewports = 0;
     static D3D11_VIEWPORT previousViewports[4];
     //static ID3DD
     void ImGuiContext::RecordState()
@@ -221,6 +221,13 @@ namespace ImGuiCLI
             if (previousTargets[i] != nullptr)
                 ++targetCt;
         g_pd3dDeviceContext->OMSetRenderTargets(targetCt, previousTargets, previousDepth);
-        g_pd3dDeviceContext->RSSetViewports(previousNumViewports, previousViewports);
+        for (int i = 0; i < 4; ++i)
+        {
+            if (previousTargets[i] != nullptr)
+                previousTargets[i]->Release();
+            previousTargets[i] = nullptr;
+        }
+        if (previousNumViewports)
+            g_pd3dDeviceContext->RSSetViewports(previousNumViewports, previousViewports);
     }
 }
