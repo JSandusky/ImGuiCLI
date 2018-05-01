@@ -561,6 +561,50 @@ namespace ImGuiCLI
         return false;
     }
 
+    // Plots an dprogress bars
+    void ImGuiCli::ProgressBar(float percent)
+    {
+        ImGui::ProgressBar(percent);
+    }
+    void ImGuiCli::ProgressBar(System::String^ label, float percent)
+    {
+        ImGui::ProgressBar(percent, ImVec2(-1, 0), LBL);
+    }
+    void ImGuiCli::ProgressBar(System::String^ label, float percent, Vector2 size)
+    {
+        ImGui::ProgressBar(percent, ImVec2(size.X, size.Y), LBL);
+    }
+    void ImGuiCli::PlotHistogram(System::String^ label, array<float>^ values, int valueOffset)
+    {
+        pin_ptr<float> p = &values[0];
+        ImGui::PlotHistogram(LBL, p, values->Length, valueOffset);
+    }
+    void ImGuiCli::PlotHistogram(System::String^ label, array<float>^ values, int valueOffset, float minVal, float maxVal)
+    {
+        pin_ptr<float> p = &values[0];
+        ImGui::PlotHistogram(LBL, p, values->Length, valueOffset, 0x0, minVal, maxVal);
+    }
+    void ImGuiCli::PlotHistogram(System::String^ label, array<float>^ values, int valueOffset, System::String^ overlayText, float minVal, float maxVal)
+    {
+        pin_ptr<float> p = &values[0];
+        ImGui::PlotHistogram(LBL, p, values->Length, valueOffset, ToSTLString(overlayText).c_str(), minVal, maxVal);
+    }
+    void ImGuiCli::PlotLines(System::String^ label, array<float>^ values, int valueOffset)
+    {
+        pin_ptr<float> p = &values[0];
+        ImGui::PlotLines(LBL, p, values->Length, valueOffset);
+    }
+    void ImGuiCli::PlotLines(System::String^ label, array<float>^ values, int valueOffset, float minVal, float maxVal) 
+    {
+        pin_ptr<float> p = &values[0];
+        ImGui::PlotLines(LBL, p, values->Length, valueOffset, 0x0, minVal, maxVal);
+    }
+    void ImGuiCli::PlotLines(System::String^ label, array<float>^ values, int valueOffset, System::String^ overlayText, float minVal, float maxVal)
+    {
+        pin_ptr<float> p = &values[0];
+        ImGui::PlotLines(LBL, p, values->Length, valueOffset, ToSTLString(overlayText).c_str(), minVal, maxVal);
+    }
+
     void ImGuiCli::PushClipRect(Vector2 min, Vector2 max, bool intersect) { ImGui::PushClipRect(ImVec2(min.X, min.Y), ImVec2(max.X, max.Y), intersect); }
     void ImGuiCli::PopClipRect() { ImGui::PopClipRect(); }
 

@@ -478,10 +478,12 @@ namespace ImGuiCLI {
         static void Columns(int ct);
         static void NextColumn();
 
+        // Tooltips
         static void SetTooltip(System::String^ label);
         static void BeginTooltip();
         static void EndTooltip();
 
+        // Menus
         static bool BeginMainMenuBar();
         static void EndMainMenuBar();
         static bool BeginMenuBar();
@@ -493,6 +495,19 @@ namespace ImGuiCLI {
         static bool MenuItem(System::String^ label, bool% selected, bool enabled);
         static bool MenuItem(System::String^ label, System::String^ shortCut, bool% selected) { return MenuItem(label, shortCut, selected, true); }
         static bool MenuItem(System::String^ label, System::String^ shortCut, bool% selected, bool enabled);
+
+        // Plots and Progress bar
+        static void ProgressBar(float percent);
+        static void ProgressBar(System::String^ label, float percent);
+        static void ProgressBar(System::String^ label, float percent, Vector2 size);
+        static void PlotHistogram(System::String^ label, array<float>^ values) { PlotHistogram(label, values, 0); }
+        static void PlotHistogram(System::String^ label, array<float>^ values, int valueOffset);
+        static void PlotHistogram(System::String^ label, array<float>^ values, int valueOffset, float minVal, float maxVal);
+        static void PlotHistogram(System::String^ label, array<float>^ values, int valueOffset, System::String^ overlayText, float minVal, float maxVal);
+        static void PlotLines(System::String^ label, array<float>^ values) { PlotLines(label, values, 0); }
+        static void PlotLines(System::String^ label, array<float>^ values, int valueOffset);
+        static void PlotLines(System::String^ label, array<float>^ values, int valueOffset, float minVal, float maxVal);
+        static void PlotLines(System::String^ label, array<float>^ values, int valueOffset, System::String^ overlayText, float minVal, float maxVal);
 
         // Clipping
         static void PushClipRect(Vector2 min, Vector2 max, bool intersect);

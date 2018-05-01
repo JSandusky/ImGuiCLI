@@ -157,6 +157,7 @@ void ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data)
     BACKUP_DX11_STATE old;
     old.ScissorRectsCount = old.ViewportsCount = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
     ctx->RSGetScissorRects(&old.ScissorRectsCount, old.ScissorRects);
+    ctx->RSGetViewports(&old.ViewportsCount, nullptr);
     ctx->RSGetViewports(&old.ViewportsCount, old.Viewports);
     ctx->RSGetState(&old.RS);
     ctx->OMGetBlendState(&old.BlendState, old.BlendFactor, &old.SampleMask);
