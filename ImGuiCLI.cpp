@@ -1,5 +1,8 @@
 // This is the main DLL file.
 
+// WARNING: sequence matters, System::IServiceProvider vs WinAPI IServiceProvider
+#include <msclr\marshal_cppstd.h>
+
 #include "ImGuiCLI.h"
 
 #include "imgui.h"
@@ -22,11 +25,7 @@ inline int GetPointer(System::Object^ obj)
 
 inline std::string ToSTLString(System::String^ str)
 {
-    IntPtr p = Marshal::StringToHGlobalAnsi(str);
-    const char* linkStr = static_cast<char*>(p.ToPointer());
-    std::string ret(linkStr);
-    Marshal::FreeHGlobal(p);
-    return ret;
+    return msclr::interop::marshal_as<std::string>(str);
 }
 
 inline void CopyStrBuff(System::String^ str, char* target)
