@@ -10,6 +10,8 @@
 
 #include <string>
 
+#define NORMAL_STRING_BUFF_SIZE 1024
+
 using namespace System::Runtime::InteropServices;
 
 inline int GetPointer(System::Object^ obj)
@@ -28,7 +30,10 @@ inline std::string ToSTLString(System::String^ str)
 }
 
 inline void CopyStrBuff(System::String^ str, char* target)
-{
+{        
+    // Just retun out if the string is null
+    if (str == nullptr)
+        return;
     IntPtr p = Marshal::StringToHGlobalAnsi(str);
     const char* linkStr = static_cast<char*>(p.ToPointer());
     memcpy(target, linkStr, strlen(linkStr));
@@ -38,8 +43,8 @@ inline void CopyStrBuff(System::String^ str, char* target)
 namespace ImGuiCLI
 {
 
-    static char BUFF[4096];
-#define RESET_TBUF() memset(BUFF, 0, 4096)
+    static char BUFF[NORMAL_STRING_BUFF_SIZE];
+#define RESET_TBUF() memset(BUFF, 0, NORMAL_STRING_BUFF_SIZE)
 #define COPY_TBUF(VAR) CopyStrBuff(VAR, BUFF)
 #define LBL ToSTLString(label).c_str()
 
@@ -139,8 +144,9 @@ namespace ImGuiCLI
 
     bool ImGuiCli::InputText(System::String^ label, System::String^% text, ImGuiInputTextFlags_ flags)
     {
+        RESET_TBUF();
         COPY_TBUF(text);
-        if (ImGui::InputText(ToSTLString(label).c_str(), BUFF, 4096, (int)flags))
+        if (ImGui::InputText(ToSTLString(label).c_str(), BUFF, NORMAL_STRING_BUFF_SIZE, (int)flags))
         {
             text = gcnew System::String(BUFF);
             return true;
@@ -150,8 +156,9 @@ namespace ImGuiCLI
 
     bool ImGuiCli::InputTextMultiline(System::String^ label, System::String^% text, Vector2 size, ImGuiInputTextFlags_ flags)
     {
+        RESET_TBUF();
         COPY_TBUF(text);
-        if (ImGui::InputTextMultiline(LBL, BUFF, 4096, ImVec2(size.X, size.Y), (int)flags))
+        if (ImGui::InputTextMultiline(LBL, BUFF, NORMAL_STRING_BUFF_SIZE, ImVec2(size.X, size.Y), (int)flags))
         {
             text = gcnew System::String(BUFF);
             return true;
@@ -309,7 +316,21 @@ namespace ImGuiCLI
     void ImGuiCli::CloseCurrentPopup() { ImGui::CloseCurrentPopup(); }
 
     // Drag and drop
-    bool ImGuiCli::BeginDragDropSource() { return ImGui::BeginDragDropSource(); }
+    void ImGuiCli::SetDragDropPayload(System::String^ id, System::String^ data)
+    {
+        auto dataString = ToSTLString(data);
+        ImGui::SetDragDropPayload(ToSTLString(id).c_str(), dataString.c_str(), dataString.length()+1);
+    }
+    bool ImGuiCli::AcceptDragDropPayload(System::String^ id, System::String^% outData)
+    {
+        if (auto payload = ImGui::AcceptDragDropPayload(ToSTLString(id).c_str()))
+        {
+            outData = gcnew System::String((char*)payload->Data);
+            return true;
+        }
+        return false;
+    }
+    bool ImGuiCli::BeginDragDropSource() { return ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID); }
     void ImGuiCli::EndDragDropSource() { ImGui::EndDragDropSource(); }
     bool ImGuiCli::BeginDragDropTarget() { return ImGui::BeginDragDropTarget(); }
     void ImGuiCli::EndDragDropTarget() { ImGui::EndDragDropTarget(); }
@@ -317,6 +338,7 @@ namespace ImGuiCLI
     bool ImGuiCli::IsItemHovered() { return ImGui::IsItemHovered(); }
     bool ImGuiCli::IsItemActive() { return ImGui::IsItemActive(); }
     bool ImGuiCli::IsItemClicked(int btn) { return ImGui::IsItemClicked(btn); }
+    bool ImGuiCli::IsItemDoubleClicked(int btn) { return ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(btn); }
     bool ImGuiCli::IsItemVisible() { return ImGui::IsItemVisible(); }
     bool ImGuiCli::IsAnyItemHovered() { return ImGui::IsAnyItemHovered(); }
     bool ImGuiCli::IsAnyItemActive() { return ImGui::IsAnyItemActive(); }
@@ -374,6 +396,7 @@ namespace ImGuiCLI
     float   ImGuiCli::GetTextLineHeightWithSpacing() { return ImGui::GetTextLineHeightWithSpacing(); }
     float   ImGuiCli::GetFrameHeight() { return ImGui::GetFrameHeight(); }
     float   ImGuiCli::GetFrameHeightWithSpacing() { return ImGui::GetFrameHeightWithSpacing(); }
+    float ImGuiCli::GetFontSize() { return ImGui::GetFontSize(); }
 
     void ImGuiCli::PushID(System::String^ label) { ImGui::PushID(LBL); }
     void ImGuiCli::PushID(System::Object^ obj) { PushID(GetPointer(obj)); }
@@ -382,6 +405,7 @@ namespace ImGuiCLI
 
     void ImGuiCli::Label(System::String^ label, System::String^ text) { ImGui::LabelText(LBL, ToSTLString(text).c_str()); }
     void ImGuiCli::Text(System::String^ label) { return ImGui::Text(LBL); }
+    void ImGuiCli::TextWrapped(System::String^ label) { return ImGui::TextWrapped(LBL); }
     bool ImGuiCli::Button(System::String^ label) { return ImGui::Button(LBL); }
     bool ImGuiCli::Button(System::String^ label, Vector2 size) { return ImGui::Button(LBL, ImVec2(size.X, size.Y)); }
     bool ImGuiCli::ArrowButton(System::String^ label, ImGuiDir_ dir) { return ImGui::ArrowButton(LBL, (ImGuiDir)dir); }
@@ -527,7 +551,9 @@ namespace ImGuiCLI
     void ImGuiCli::Bullet() { ImGui::Bullet(); }
 
     void ImGuiCli::Columns(int ct) { ImGui::Columns(ct); }
+    void ImGuiCli::Columns(int ct, bool border) { ImGui::Columns(ct, nullptr, border); }
     void ImGuiCli::NextColumn() { ImGui::NextColumn(); }
+    float ImGuiCli::GetColumnWidth(int idx) { return ImGui::GetColumnWidth(idx); }
 
     void ImGuiCli::SetTooltip(System::String^ label) { ImGui::SetTooltip(LBL); }
     void ImGuiCli::BeginTooltip() { ImGui::BeginTooltip(); }
@@ -610,7 +636,7 @@ namespace ImGuiCLI
 
     // Tree
     bool ImGuiCli::TreeNode(System::String^ label) { return ImGui::TreeNode(LBL); }
-    bool ImGuiCli::TreeNodeEx(System::String^ label, int flags) { return ImGui::TreeNodeEx(LBL, flags); }
+    bool ImGuiCli::TreeNodeEx(System::String^ label, ImGuiTreeNodeFlags_ flags) { return ImGui::TreeNodeEx(LBL, (int)flags); }
     void ImGuiCli::TreePop() { ImGui::TreePop(); }
 
     // Utilties / Demo
@@ -618,6 +644,21 @@ namespace ImGuiCLI
     void ImGuiCli::ShowDemoWindow() { ImGui::ShowDemoWindow(); }
     void ImGuiCli::ShowMetricsWindow() { ImGui::ShowMetricsWindow(); }
     void ImGuiCli::ShowStyleEditor() { ImGui::ShowStyleEditor(); }
+
+    bool ImGuiEx::DragMatrix(Matrix% matrix)
+    {
+        Matrix m = matrix;
+        bool changed = ImGui::DragFloat4("##m0", &m.M11);
+        changed |= ImGui::DragFloat4("##m1", &m.M21);
+        changed |= ImGui::DragFloat4("##m2", &m.M31);
+        changed |= ImGui::DragFloat4("##m3", &m.M41);
+        if (changed)
+        {
+            matrix = m;
+            return true;
+        }
+        return false;
+    }
 
     bool ImGuiEx::RangeSliderFloat(System::String^ label, float% min, float% max, float vMin, float vMax)
     {

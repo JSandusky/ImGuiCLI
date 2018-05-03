@@ -389,7 +389,9 @@ namespace ImGuiCLI {
         static void CloseCurrentPopup();
 
         // Drag and drop
+        static void SetDragDropPayload(System::String^ id, System::String^ data);
         static bool BeginDragDropSource();
+        static bool AcceptDragDropPayload(System::String^ id, System::String^% outData);
         static void EndDragDropSource();
         static bool BeginDragDropTarget();
         static void EndDragDropTarget();
@@ -398,6 +400,7 @@ namespace ImGuiCLI {
         static bool IsItemHovered();
         static bool IsItemActive();
         static bool IsItemClicked(int btn);
+        static bool IsItemDoubleClicked(int btn);
         static bool IsItemVisible();
         static bool IsAnyItemHovered();
         static bool IsAnyItemActive();
@@ -440,6 +443,7 @@ namespace ImGuiCLI {
         static float         GetTextLineHeightWithSpacing();
         static float         GetFrameHeight();
         static float         GetFrameHeightWithSpacing();
+        static float         GetFontSize();
 
         static void PushID(System::String^ label);
         static void PushID(System::Object^ obj);
@@ -448,6 +452,7 @@ namespace ImGuiCLI {
         
         static void Label(System::String^ label, System::String^ text);
         static void Text(System::String^ text);
+        static void TextWrapped(System::String^ text);
         static bool Button(System::String^ label);
         static bool Button(System::String^ label, Vector2 size);
         static bool ArrowButton(System::String^ id, ImGuiDir_ dir);
@@ -476,7 +481,9 @@ namespace ImGuiCLI {
         static void Bullet();
 
         static void Columns(int ct);
+        static void Columns(int ct, bool borer);
         static void NextColumn();
+        static float GetColumnWidth(int idx);
 
         // Tooltips
         static void SetTooltip(System::String^ label);
@@ -515,7 +522,7 @@ namespace ImGuiCLI {
 
         // Tree
         static bool TreeNode(System::String^ label);
-        static bool TreeNodeEx(System::String^ label, int flags);
+        static bool TreeNodeEx(System::String^ label, ImGuiTreeNodeFlags_ flags);
         static void TreePop();
 
         // Demo / Window utils
@@ -528,6 +535,8 @@ namespace ImGuiCLI {
     public ref class ImGuiEx
     {
     public:
+        static bool DragMatrix(Matrix% matrix);
+
         static bool RangeSliderFloat(System::String^ label, float% min, float% max, float vMin, float vMax);
         static bool BitField(System::String^ label, unsigned% bits);
         static bool BitField(System::String^ label, unsigned% bits, unsigned% hitBit);
