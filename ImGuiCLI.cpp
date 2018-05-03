@@ -36,7 +36,7 @@ inline void CopyStrBuff(System::String^ str, char* target)
         return;
     IntPtr p = Marshal::StringToHGlobalAnsi(str);
     const char* linkStr = static_cast<char*>(p.ToPointer());
-    memcpy(target, linkStr, strlen(linkStr));
+    strcpy(target, linkStr);
     Marshal::FreeHGlobal(p);
 }
 
