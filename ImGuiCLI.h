@@ -385,6 +385,7 @@ namespace ImGuiCLI {
         static void OpenPopup(System::String^ label);
         static bool BeginPopup(System::String^ label, ImGuiWindowFlags_ flags);
         static void EndPopup();
+        static bool IsPopupOpen();
         static bool IsPopupOpen(System::String^ label);
         static void CloseCurrentPopup();
 
@@ -446,7 +447,6 @@ namespace ImGuiCLI {
         static float         GetFontSize();
 
         static void PushID(System::String^ label);
-        static void PushID(System::Object^ obj);
         static void PushID(int id);
         static void PopID();
         
@@ -605,5 +605,46 @@ namespace ImGuiCLI {
         bool PassFilter(System::String^ text);
     private:
         void* data_;
+    };
+
+    public enum class GizmoMode
+    {
+        Translate,
+        Rotate,
+        Scale,
+        Box
+    };
+
+    public ref class Gizmo
+    {
+    public:
+        Gizmo();
+        ~Gizmo();
+
+        static void BeginFrame();
+
+        /// Return true if the gizmo is mouse hovered
+        property bool IsOver { bool get(); }
+        /// Return true if the gizmo is utilized
+        property bool IsUsing { bool get(); }
+        /// Return the active axis ID
+        property int Axis { int get(); }
+
+        property GizmoMode Mode { GizmoMode get(); void set(GizmoMode); }
+        property bool IsLocal { bool get(); void set(bool); }
+
+        void Prepare(Matrix viewMatrix, Matrix projection, int x, int y, int w, int h);
+        bool Manipulate(Matrix% editMatrix, Matrix% deltaMatrx);
+
+    private:
+        Matrix viewMatrix_;
+        Matrix projectionMatrix_;
+        GizmoMode gizmoMode_;
+        bool isLocal_ = true;
+        float snapMove_ = 1.0f;
+        float snapRot_ = 10.0f;
+        bool snapping_ = false;
+    private:
+        void* context_;
     };
 }

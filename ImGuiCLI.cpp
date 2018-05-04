@@ -10,6 +10,7 @@
 #include "imgui_ext.h"
 #include "imgui_internal.h"
 #include "imgui_tabs.h"
+#include "ImGuizmo.h"
 
 #include <string>
 
@@ -311,6 +312,7 @@ namespace ImGuiCLI
     void ImGuiCli::OpenPopup(System::String^ label) { ImGui::OpenPopup(LBL); }
     bool ImGuiCli::BeginPopup(System::String^ label, ImGuiWindowFlags_ flags) { return ImGui::BeginPopup(LBL, (int)flags); }    
     void ImGuiCli::EndPopup() { ImGui::EndPopup(); }
+    bool ImGuiCli::IsPopupOpen() { return ImGui::IsPopupOpen((ImGuiID)0); }
     bool ImGuiCli::IsPopupOpen(System::String^ label) { return ImGui::IsPopupOpen(LBL); }
     void ImGuiCli::CloseCurrentPopup() { ImGui::CloseCurrentPopup(); }
 
@@ -397,8 +399,8 @@ namespace ImGuiCLI
     float   ImGuiCli::GetFrameHeightWithSpacing() { return ImGui::GetFrameHeightWithSpacing(); }
     float ImGuiCli::GetFontSize() { return ImGui::GetFontSize(); }
 
+
     void ImGuiCli::PushID(System::String^ label) { ImGui::PushID(LBL); }
-    void ImGuiCli::PushID(System::Object^ obj) { PushID(GetPointer(obj)); }
     void ImGuiCli::PushID(int id) { ImGui::PushID(id); }
     void ImGuiCli::PopID() { ImGui::PopID(); }
 
@@ -911,4 +913,88 @@ bool ImGuiCLI::ImGuiTextFilter::IsActive::get()
 bool ImGuiCLI::ImGuiTextFilter::PassFilter(System::String^ label)
 {
     return ((::ImGuiTextFilter*)data_)->PassFilter(LBL);
+}
+
+namespace ImGuiCLI
+{
+    Gizmo::Gizmo()
+    {
+        context_ = ImGuizmo::CreateContext();
+    }
+    Gizmo::~Gizmo()
+    {
+        ImGuizmo::DestroyContext((ImGuizmo::Context*)context_);
+    }
+
+    void Gizmo::BeginFrame()
+    {
+        ImGuizmo::BeginFrame();
+    }
+
+    void Gizmo::Prepare(Matrix viewMatrix, Matrix projMatrix, int x, int y, int w, int h)
+    {
+        ImGuizmo::SetContext((ImGuizmo::Context*)context_);
+        ImGuizmo::SetRect(x, y, w, h);
+        viewMatrix_ = viewMatrix;
+        projectionMatrix_ = projMatrix;
+    }
+
+    bool Gizmo::Manipulate(Matrix% editMatrix, Matrix% deltaMatrx)
+    {
+        ImGuizmo::SetContext((ImGuizmo::Context*)context_);
+        Matrix edit = editMatrix;
+        Matrix delta;
+        ImGuizmo::SetDrawlist();
+
+        ImGuizmo::OPERATION op = ImGuizmo::OPERATION::TRANSLATE;
+        ImGuizmo::MODE loc = isLocal_ ? ImGuizmo::MODE::LOCAL : ImGuizmo::MODE::WORLD;
+        switch (gizmoMode_)
+        {
+        case GizmoMode::Translate:
+            op = ImGuizmo::OPERATION::TRANSLATE;
+            break;
+        case GizmoMode::Rotate:
+            op = ImGuizmo::OPERATION::ROTATE;
+            break;
+        case GizmoMode::Scale: // doesn't allow local mode, it's bad
+            op = ImGuizmo::OPERATION::SCALE;
+            loc = ImGuizmo::MODE::LOCAL;
+            break;
+        case GizmoMode::Box: // no local mode either
+            op = ImGuizmo::OPERATION::BOX_ONLY;
+            loc = ImGuizmo::MODE::LOCAL;
+            break;
+        }
+
+        Matrix vm = viewMatrix_;
+        Matrix pm = projectionMatrix_;
+        ImGuizmo::Manipulate(&vm.M11, &pm.M11, op, loc, &edit.M11, &delta.M11);
+        if (ImGuizmo::IsUsing())
+        {
+            editMatrix = edit;
+            deltaMatrx = delta;
+            return true;
+        }
+        return false;
+    }
+
+    bool Gizmo::IsOver::get()
+    {
+        ImGuizmo::SetContext((ImGuizmo::Context*)context_);
+        return ImGuizmo::IsOver();
+    }
+    bool Gizmo::IsUsing::get()
+    {
+        ImGuizmo::SetContext((ImGuizmo::Context*)context_);
+        return ImGuizmo::IsUsing();
+    }
+    int Gizmo::Axis::get() { 
+        ImGuizmo::SetContext((ImGuizmo::Context*)context_);
+        return ImGuizmo::GetAxis();
+    }
+
+    GizmoMode Gizmo::Mode::get() { return gizmoMode_; }
+    void Gizmo::Mode::set(GizmoMode value) { gizmoMode_ = value; }
+    bool Gizmo::IsLocal::get() { return isLocal_; }
+    void Gizmo::IsLocal::set(bool value) { isLocal_ = value; }
 }
