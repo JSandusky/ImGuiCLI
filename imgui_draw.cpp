@@ -2327,6 +2327,9 @@ const char* ImFont::CalcWordWrapPositionA(float scale, const char* text, const c
     const char* s = text;
     while (s < text_end)
     {
+        //JSandusky: text coloring
+        if (*s == '^' && *(s + 1) != '^') { s += 2; continue; }
+
         unsigned int c = (unsigned int)*s;
         const char* next_s;
         if (c < 0x80)
@@ -2414,6 +2417,9 @@ ImVec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, cons
     const char* s = text_begin;
     while (s < text_end)
     {
+        //JSandusky: color handling
+        if (*s == '^' && *(s+1) != '^') { s += 2; continue; }
+
         if (word_wrap_enabled)
         {
             // Calculate how far we can render. Requires two passes on the string data but keeps the code simple and not intrusive for what's essentially an uncommon feature.
@@ -2539,8 +2545,30 @@ void ImFont::RenderText(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col
     ImDrawIdx* idx_write = draw_list->_IdxWritePtr;
     unsigned int vtx_current_idx = draw_list->_VtxCurrentIdx;
 
+    const ImU32 alpha = (col >> 24);
+    const ImU32 color_codes[10] =
+    {
+        col,                           // default 0
+        ImColor(255,   0,   0, alpha), // red     1
+        ImColor(0, 255,   0, alpha), // green   2
+        ImColor(255, 255,   0, alpha), // yellow  3
+        ImColor(0,   0, 255, alpha), // blue    4
+        ImColor(0, 255, 255, alpha), // cyan    5
+        ImColor(255,   0, 255, alpha), // magenta 6
+        ImColor(255, 255, 255, alpha), // white   7
+        ImColor(0,   0,   0, alpha), // black   8
+        ImColor(255,   128,   0, alpha), // orange     9
+    };
+
     while (s < text_end)
     {
+        if (*s == '^' && *(s + 1) && *(s + 1) != '^')
+        {
+            col = color_codes[(*(s + 1) - '0') % 8];
+            s += 2;
+            continue;
+        }
+
         if (word_wrap_enabled)
         {
             // Calculate how far we can render. Requires two passes on the string data but keeps the code simple and not intrusive for what's essentially an uncommon feature.

@@ -10586,6 +10586,8 @@ static ImVec2 InputTextCalcTextSizeW(const ImWchar* text_begin, const ImWchar* t
         }
         if (c == '\r')
             continue;
+        //JSandusky: colored text
+        if (*s == '^' && *(s + 1) != '^') { s += 2; continue; }
 
         const float char_width = font->GetCharAdvance((unsigned short)c) * scale;
         line_width += char_width;
