@@ -407,8 +407,8 @@ struct DockContext
 		}
 		else
 		{
-			SetNextWindowPos(ImVec2(0, 0));
-			SetNextWindowSize(GetIO().DisplaySize);
+            SetNextWindowPos(m_dockspace_rect.GetTL());
+            SetNextWindowSize(m_dockspace_rect.GetSize());
 		}
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 		Begin("###DockPanel", nullptr, flags);
