@@ -72,6 +72,26 @@ namespace ImGuiControls
             return false;
         }
 
+        public void DrawAsWindow(string title)
+        {
+            if (ImGuiCli.Begin(title, ImGuiWindowFlags_.MenuBar | ImGuiWindowFlags_.ResizeFromAnySide))
+            {
+                DrawMenuBar();
+                Draw();
+            }
+            ImGuiCli.End();
+        }
+
+        public void DrawAsDock(string title)
+        {
+            if (ImGuiDock.BeginDock(title, ImGuiWindowFlags_.MenuBar | ImGuiWindowFlags_.ResizeFromAnySide))
+            {
+                DrawMenuBar();
+                Draw();
+            }
+            ImGuiDock.EndDock();
+        }
+
         ImGuiCLI.ImGuiTextFilter filter_ = new ImGuiTextFilter();
         public void DrawMenuBar()
         {
@@ -79,26 +99,27 @@ namespace ImGuiControls
             if (!CurrentDirectory.EndsWith(":") && !CurrentDirectory.EndsWith(":\\"))
             {
                 //ImGuiEx.PushBoldFont();
-                if (ImGuiCli.Button("Up", new Vector2(32, 0)))
+                if (ImGuiCli.Button(ICON_FA.LEVEL_UP_ALT, new Vector2(32, 0)))
                 {
                     CurrentDirectory = System.IO.Directory.GetParent(CurrentDirectory).FullName;
                     UpdateItems();
                 }
+                if (ImGuiCli.IsItemHovered()) ImGuiCli.SetTooltip("To parent directory");
                 //ImGuiEx.PopFont();
             }
             ImGuiCli.Text(CurrentDirectory);
-            ImGuiCli.PushItemWidth(ImGuiCli.GetContentRegionAvailWidth() * 0.7f);
+            ImGuiCli.PushItemWidth(ImGuiCli.GetContentRegionAvailWidth() * 0.7f - 70);
             filter_.Draw(ICON_FA.FILTER + " Filter");
             ImGuiCli.PopItemWidth();
 
             //ImGuiEx.PushBoldFont();
-            ImGuiCli.SetCursorPosX(ImGuiCli.GetWindowWidth() - 90);
-            if (ImGuiCli.Button("D"))
+            ImGuiCli.SetCursorPosX(ImGuiCli.GetWindowWidth() - ImGuiCli.CalcTextSize(ICON_FA.LIST_UL + "  +  " + ICON_FA.STAR).X); //70);
+            if (ImGuiCli.Button(ICON_FA.LIST_UL))
                 asDetail_ = !asDetail_;
             if (ImGuiCli.IsItemHovered())
                 ImGuiCli.SetTooltip("Toggle details view");
 
-            if (ImGuiCli.Button("+F"))
+            if (ImGuiCli.Button("+" + ICON_FA.STAR))
             {
                 if (!Favorites.Contains(CurrentDirectory))
                     Favorites.Add(CurrentDirectory);
@@ -249,6 +270,19 @@ namespace ImGuiControls
                     ImGuiCli.ImageButton(thumbnail, new Vector2(itemSize - 20, itemSize - 16));
                 else
                     ImGuiCli.Button("???", new Vector2(itemSize - 20, itemSize - 16));
+                if (!ImGuiCli.IsPopupOpen() && ImGuiCli.BeginDragDropSource())
+                {
+                    if (Recents.Contains(CurrentDirectory))
+                        Recents.Remove(CurrentDirectory);
+                    Recents.Insert(0, CurrentDirectory);
+
+                    ImGuiCli.SetDragDropPayload("U_ASSET", item);
+                    if (thumbnail != null)
+                        ImGuiCli.Image(thumbnail, new Vector2(128, 128));
+                    ImGuiCli.Text(displayName);
+                    ImGuiCli.EndDragDropSource();
+                }
+
                 if (ImGuiCli.IsItemDoubleClicked(0))
                 {
                     System.IO.DirectoryInfo dirInfo = new System.IO.DirectoryInfo(item);
@@ -273,18 +307,6 @@ namespace ImGuiControls
                 if (!asDetail_ && ImGuiCli.IsItemHovered())
                     ImGuiCli.SetTooltip(item);
                 ImGuiCli.EndGroup();
-                if (!ImGuiCli.IsPopupOpen("##asset_browser_popup") && ImGuiCli.BeginDragDropSource())
-                {
-                    if (Recents.Contains(CurrentDirectory))
-                        Recents.Remove(CurrentDirectory);
-                    Recents.Insert(0, CurrentDirectory);
-
-                    ImGuiCli.SetDragDropPayload("U_ASSET", item);
-                    if (thumbnail != null)
-                        ImGuiCli.Image(thumbnail, new Vector2(128, 128));
-                    ImGuiCli.Text(displayName);
-                    ImGuiCli.EndDragDropSource();
-                }
 
                 ImGuiCli.PopID();
                 ImGuiCli.NextColumn();

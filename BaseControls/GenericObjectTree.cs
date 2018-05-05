@@ -38,6 +38,13 @@ namespace ImGuiControls
             ImGuiCli.End();
         }
 
+        public void DrawAsDock(string title)
+        {
+            if (ImGuiDock.BeginDock(title))
+                Draw();
+            ImGuiDock.EndDock();
+        }
+
         public void Draw()
         {
             Draw(RootObjects, 1);
