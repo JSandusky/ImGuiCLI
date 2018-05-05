@@ -10,6 +10,14 @@ using ImGuiCLI;
 
 namespace PropertyData
 {
+    public enum EditorType
+    {
+        Default,
+        Color,
+        Bitmask,
+        Transform
+    }
+
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Class, AllowMultiple = true)]
     [Description("Marks the sort sequence of the property. \"propName\" parameter is only required when placed on a class to specify the target field.")]
     public class PropertyPriorityAttribute : System.Attribute
@@ -44,6 +52,7 @@ namespace PropertyData
     }
 
     [AttributeUsage(AttributeTargets.Class)]
+    [Description("Allows a class to override the name of fields. Specifically for when the meaning of something changes during inheritance.")]
     public class OverrideNameAttribute : System.Attribute
     {
         public string Target { get; set; }
@@ -71,6 +80,7 @@ namespace PropertyData
 
         /// Typically should return true, return false for something like a checkbox.
         bool RequiresLabel { get; }
+
         /// <summary>
         /// Generates code for handling the ImGui calls and data manipulation.
         /// </summary>
@@ -86,7 +96,22 @@ namespace PropertyData
     /// </summary>
     public interface ImPropertyObjectPage
     {
+        /// <summary>
+        /// Used for complete emission of a UI for a given object.
+        /// </summary>
+        /// <param name="forObject"></param>
         void EmitEditPage(object forObject);
+
+        /// <summary>
+        /// Outputs a list of column names for this object, used for datagrid column intersection.
+        /// </summary>
+        List<string> GetColumnFields();
+
+        /// <summary>
+        /// Emit UI for a column row.
+        /// </summary>
+        /// <param name="fieldList">List of fields to be displayed</param>
+        /// <param name="forObject">Object the row is for</param>
         void EmitColumns(IList<string> fieldList, object forObject);
     }
 }
@@ -107,6 +132,8 @@ namespace ImGuiControls
 
         /// Whether to use alphabetical display.
         public bool IsAlphabetical { get; set; } = true;
+
+        public bool IsAdvanced { get; set; } = false;
 
         /// Object being inspected.
         public object Inspecting { get; set; }
@@ -132,6 +159,16 @@ namespace ImGuiControls
             ImGuiCli.End();
         }
 
+        public virtual void DrawAsDock(string title)
+        {
+            if (ImGuiDock.BeginDock(title, ImGuiWindowFlags_.MenuBar | ImGuiWindowFlags_.ResizeFromAnySide))
+            {
+                DrawMenuBar();
+                Draw(Inspecting);
+            }
+            ImGuiDock.EndDock();
+        }
+
         /// For use when in a custom window, draws the menu-bar.
         public void DrawMenuBar()
         {
@@ -139,11 +176,15 @@ namespace ImGuiControls
             ImGuiCli.PushItemWidth(ImGuiCli.GetContentRegionAvailWidth() * 0.65f);
             filter_.Draw(ICON_FA.FILTER + " Filter");
             ImGuiCli.SameLine();
-            ImGuiCli.SetCursorPosX(ImGuiCli.GetWindowWidth() - 20);
-            if (ImGuiCli.Button(IsAlphabetical ? "G" : "A"))
+            ImGuiCli.SetCursorPosX(ImGuiCli.GetWindowWidth() - ImGuiCli.CalcTextSize(ICON_FA.EYE + ICON_FA.SORT_ALPHA_DOWN + "  ").X - ImGuiStyle.FramePadding.X*3);
+            if (ImGuiCli.Button(IsAlphabetical ? ICON_FA.OBJECT_GROUP : ICON_FA.SORT_ALPHA_DOWN))
                 IsAlphabetical = !IsAlphabetical;
             if (ImGuiCli.IsItemHovered())
-                ImGuiCli.SetTooltip("Toggle alphabetical / grouping");
+                ImGuiCli.SetTooltip(IsAlphabetical ? "Group fields" : "Order alphabetically");
+            if (ImGuiCli.Button(IsAdvanced ? ICON_FA.EYE : ICON_FA.EYE_SLASH))
+                IsAdvanced = !IsAdvanced;
+            if (ImGuiCli.IsItemHovered())
+                ImGuiCli.SetTooltip(IsAdvanced ? "Showing advanced fields" : "Hiding advanced fields");
             ImGuiCli.EndMenuBar();
         }
 
@@ -155,8 +196,8 @@ namespace ImGuiControls
                 ImGuiCli.Text("< nothing to edit >");
                 return;
             }
-            //ImGuiCli.PushID(target);
-
+            
+            // Check if there's a "complete" handler for the object
             PropertyData.ImPropertyObjectPage page = null;
             if (reflectCache_.DefinedPages.TryGetValue(target.GetType(), out page))
             {
@@ -167,6 +208,8 @@ namespace ImGuiControls
             if (IsAlphabetical)
             {
                 List<ReflectionCache.CachedPropertyInfo> properties = reflectCache_.GetAlphabetical(target.GetType());
+                if (!IsAdvanced)
+                    properties = properties.Where(p => p.IsAdvanced == false).ToList();
                 ImGuiCli.PushItemWidth(-1);
                 for (int p = 0; p < properties.Count; ++p)
                 {
@@ -182,13 +225,18 @@ namespace ImGuiControls
                 ImGuiCli.PushItemWidth(-1);
                 for (int i = 0; i < groups.Count; ++i)
                 {
+                    var props = groups[i].Properties;
+                    if (!IsAdvanced)
+                        props = props.Where(p => p.IsAdvanced == false).ToList();
+                    if (props.Count == 0)
+                        continue;
                     if (ImGuiCli.CollapsingHeader(groups[i].GroupName))
                     {
                         ImGuiCli.Indent();
-                        for (int p = 0; p < groups[i].Properties.Count; ++p)
+                        for (int p = 0; p < props.Count; ++p)
                         {
                             ImGuiCli.PushID(p + 1);
-                            DrawField(groups[i].Properties[p], target, true);
+                            DrawField(props[p], target, true);
                             ImGuiCli.PopID();
                         }
                         ImGuiCli.Unindent();
@@ -196,7 +244,6 @@ namespace ImGuiControls
                 }
                 ImGuiCli.PopItemWidth();
             }
-            //ImGuiCli.PopID();
         }
 
         /// Draws a field from cache info.
@@ -209,8 +256,13 @@ namespace ImGuiControls
             if (pType != typeof(bool) && withLabel)
             {
                 ImGuiCli.Text(info.DisplayName);
-                if (!string.IsNullOrWhiteSpace(info.Tip) && ImGuiCli.IsItemHovered())
-                    ImGuiCli.SetTooltip(info.Tip);
+                if (!string.IsNullOrWhiteSpace(info.Tip))// && ImGuiCli.IsItemHovered())
+                {
+                    ImGuiCli.SameLine();
+                    ImGuiCli.Text(ICON_FA.INFO_CIRCLE);
+                    if (ImGuiCli.IsItemHovered())
+                        ImGuiCli.SetTooltip(info.Tip);
+                }
             }
 
             string labelLessName = "##" + info.DisplayName;
@@ -229,6 +281,12 @@ namespace ImGuiControls
                 int value = (int)info.GetValue(target);
                 if (ImGuiCli.DragInt(labelLessName, ref value))
                     info.SetValue(target, value);
+            }
+            else if (pType == typeof(uint))
+            {
+                int value = (int)info.GetValue(target);
+                if (ImGuiCli.DragInt(labelLessName, ref value, 1, 0, int.MaxValue))
+                    info.SetValue(target, (int)value);
             }
             else if (pType == typeof(float))
             {
@@ -270,19 +328,33 @@ namespace ImGuiControls
             }
             else if (pType == typeof(Vector4))
             {
-                Vector4 value = (Vector4)info.GetValue(target);
-                if (ImGuiCli.DragFloat4(labelLessName, ref value))
-                    info.SetValue(target, value);
+                if (info.EditType == PropertyData.EditorType.Color)
+                {
+                    Vector4 value = (Vector4)info.GetValue(target);
+                    if (ImGuiCli.InputColor(labelLessName, ref value))
+                        info.SetValue(target, value);
+                }
+                else
+                {
+                    Vector4 value = (Vector4)info.GetValue(target);
+                    if (ImGuiCli.DragFloat4(labelLessName, ref value))
+                        info.SetValue(target, value);
+                }
             }
             else if (pType == typeof(Matrix))
             {
-                Matrix value = (Matrix)info.GetValue(target);
-                if (ImGuiEx.DragMatrix(ref value))
-                    info.SetValue(target, value);
-            }
-            else if (pType == typeof(Quaternion))
-            {
-
+                if (info.EditType == PropertyData.EditorType.Transform)
+                {
+                    Matrix value = (Matrix)info.GetValue(target);
+                    if (ImGuiEx.MatrixTransform(ref value, true))
+                        info.SetValue(target, value);
+                }
+                else
+                {
+                    Matrix value = (Matrix)info.GetValue(target);
+                    if (ImGuiEx.DragMatrix(ref value))
+                        info.SetValue(target, value);
+                }
             }
             else if (pType.IsEnum)
             {
@@ -436,6 +508,13 @@ namespace ImGuiControls
             ImGuiCli.End();
         }
 
+        public override void DrawAsDock(string title)
+        {
+            if (ImGuiDock.BeginDock(title, ImGuiWindowFlags_.ResizeFromAnySide))
+                Draw();
+            ImGuiDock.EndDock();
+        }
+
         /// For use when in a custom window. Produces ImGui calls.
         List<string> infos = null;
         List<ReflectionCache.CachedPropertyInfo>[] tables = null;
@@ -456,11 +535,15 @@ namespace ImGuiControls
                     if (infos == null)
                     {
                         tables[i] = reflectCache_.GetAlphabetical(Objects[i].GetType());
+                        if (!IsAdvanced)
+                            tables[i] = tables[i].Where(p => p.IsAdvanced == false).ToList();
                         infos = tables[i].Select(s => s.DisplayName).ToList();
                     }
                     else
                     {
                         tables[i] = reflectCache_.GetAlphabetical(Objects[i].GetType());
+                        if (!IsAdvanced)
+                            tables[i] = tables[i].Where(p => p.IsAdvanced == false).ToList();
                         infos = infos.Intersect(tables[i].Select(s => s.DisplayName).ToList()).ToList();
                     }
                 }
@@ -511,7 +594,17 @@ namespace ImGuiControls
     /// <summary>
     /// Reflection caching is independent from the inspectors so
     /// that reduced (or expansive) means of reflecting can be controlled.
-    /// </summary>
+    /// 
+    /// Attributes:
+    ///     DisplayNameAttribute: use for overriding text
+    ///     DescriptionAttribute: use for adding a tip
+    ///     EditorBrowsableAttribute: use to mark as invisible/advanced/visible
+    ///     EditorAttribute: use to set EditorType enum value from string
+    ///     PropertyPriorityAttribute: use to set the sort priority (does not apply to alphabetical)
+    ///     PropertyIgnoreAttribute: use to exclude from inclusion
+    ///         can be attached to a class, in which case specify the name - able to hide inherited fields
+    ///     OverrideNameAttribute: place on a class to have it override a name, for coping with inheritence
+    ///     </summary>
     public class ReflectionCache
     {
         public Dictionary<Type, PropertyData.ImPropertyObjectPage> DefinedPages { get; private set; } = new Dictionary<Type, PropertyData.ImPropertyObjectPage>();
@@ -527,11 +620,16 @@ namespace ImGuiControls
         {
             public PropertyInfo Property;
             public FieldInfo Field;
+            public PropertyData.EditorType EditType = PropertyData.EditorType.Default;
             public string AccessName;
             public string DisplayName;
             public string Tip;
             public Type Type;
             public string[] enumNames;
+            public bool IsAdvanced = false;
+            public HashSet<string> EditorKeys = new HashSet<string>();
+
+            public CachedPropertyInfo() {  }
 
             public object GetValue(object target)
             {
@@ -546,6 +644,22 @@ namespace ImGuiControls
                     Property.SetValue(target, value);
                 else
                     Field.SetValue(target, value);
+            }
+
+            /// Allows more generic handling of property vs field differences.
+            public T GetCustomAttribute<T>() where T : System.Attribute
+            {
+                if (Property != null)
+                    return Property.GetCustomAttribute<T>();
+                return Field.GetCustomAttribute<T>();
+            }
+            
+            /// Generic handling of property vs field differences.
+            public IEnumerable<T> GetCustomAttributes<T>() where T : System.Attribute
+            {
+                if (Property != null)
+                    return Property.GetCustomAttributes<T>();
+                return Field.GetCustomAttributes<T>();
             }
         }
 
@@ -606,198 +720,32 @@ namespace ImGuiControls
             if (Cache.ContainsKey(type))
                 return Cache[type];
 
-            List<CachedPropertyInfo> retVal = new List<CachedPropertyInfo>();
-            if (scanProperties_)
-            {
-                PropertyInfo[] infos = type.GetProperties();
-                List<PropertyInfo> processing = FilterByAttributes(type, infos);
-
-                processing.Sort((lhs, rhs) =>
-                {
-                    var lhsAttr = lhs.GetCustomAttribute<PropertyData.PropertyPriorityAttribute>();
-                    var rhsAttr = rhs.GetCustomAttribute<PropertyData.PropertyPriorityAttribute>();
-                    if (lhsAttr != null && rhsAttr == null)
-                        return -1;
-                    else if (lhsAttr == null && rhsAttr != null)
-                        return 1;
-                    else if (lhsAttr != null && rhsAttr != null)
-                    {
-                        if (lhsAttr.Level == rhsAttr.Level)
-                            return 0;
-                        return lhsAttr.Level < rhsAttr.Level ? -1 : 1;
-                    }
-                    return 1;
-                });
-
-                List<PropertyData.OverrideNameAttribute> nameOverrides = new List<PropertyData.OverrideNameAttribute>();
-                var foundOverrides = type.GetCustomAttributes<PropertyData.OverrideNameAttribute>();
-                if (foundOverrides != null)
-                    foreach (var ov in foundOverrides)
-                        nameOverrides.Add(ov);
-                
-                foreach (var val in processing)
-                {
-                    CachedPropertyInfo info = new CachedPropertyInfo { Property = val, AccessName = val.Name, Type = val.PropertyType };
-
-                    var lbl = val.GetCustomAttribute<DisplayNameAttribute>();
-                    var overrideName = nameOverrides.FirstOrDefault(o => o.Target.Equals(val.Name));
-
-                    if (overrideName != null)
-                        info.DisplayName = overrideName.NewName;
-                    else if (lbl != null)
-                        info.DisplayName = lbl.DisplayName;
-                    else
-                        info.DisplayName = val.Name.SplitCamelCase();
-
-                    if (val.PropertyType.IsEnum)
-                        info.enumNames = Enum.GetNames(val.PropertyType);
-
-                    var tip = val.GetCustomAttribute<DescriptionAttribute>();
-                    if (tip != null)
-                        info.Tip = tip.Description;
-
-                    retVal.Add(info);
-                }
-            }
-
-            if (scanFields_)
-            {
-                FieldInfo[] infos = type.GetFields();
-                List<FieldInfo> processing = FilterByAttributes(type, infos);
-
-                processing.Sort((lhs, rhs) =>
-                {
-                    var lhsAttr = lhs.GetCustomAttribute<PropertyData.PropertyPriorityAttribute>();
-                    var rhsAttr = rhs.GetCustomAttribute<PropertyData.PropertyPriorityAttribute>();
-                    if (lhsAttr != null && rhsAttr == null)
-                        return -1;
-                    else if (lhsAttr == null && rhsAttr != null)
-                        return 1;
-                    else if (lhsAttr != null && rhsAttr != null)
-                    {
-                        if (lhsAttr.Level == rhsAttr.Level)
-                            return 0;
-                        return lhsAttr.Level < rhsAttr.Level ? -1 : 1;
-                    }
-                    return 1;
-                });
-
-                List<PropertyData.OverrideNameAttribute> nameOverrides = new List<PropertyData.OverrideNameAttribute>();
-                var foundOverrides = type.GetCustomAttributes<PropertyData.OverrideNameAttribute>();
-                if (foundOverrides != null)
-                    foreach (var ov in foundOverrides)
-                        nameOverrides.Add(ov);
-                
-                foreach (var val in processing)
-                {
-                    CachedPropertyInfo info = new CachedPropertyInfo { Field = val, Type = val.FieldType, AccessName = val.Name };
-
-                    var lbl = val.GetCustomAttribute<DisplayNameAttribute>();
-                    var overrideName = nameOverrides.FirstOrDefault(o => o.Target.Equals(val.Name));
-
-                    if (overrideName != null)
-                        info.DisplayName = overrideName.NewName;
-                    else if (lbl != null)
-                        info.DisplayName = lbl.DisplayName;
-                    else
-                        info.DisplayName = val.Name.SplitCamelCase();
-
-                    if (val.FieldType.IsEnum)
-                        info.enumNames = Enum.GetNames(val.FieldType);
-
-                    var tip = val.GetCustomAttribute<DescriptionAttribute>();
-                    if (tip != null)
-                        info.Tip = tip.Description;
-
-                    retVal.Add(info);
-                }
-            }
-
-            Cache[type] = retVal;
-            return retVal;
-        }
-
-        public List<CachedPropertyInfo> GetAlphabetical(Type type)
-        {
-            if (AlphabeticalCache.ContainsKey(type))
-                return AlphabeticalCache[type];
-
             List<CachedPropertyInfo> ret = new List<CachedPropertyInfo>();
-
             if (scanProperties_)
             {
                 PropertyInfo[] infos = type.GetProperties();
-                List<PropertyInfo> processing = FilterByAttributes(type, infos);
-
-                foreach (var val in processing)
+                foreach (var val in infos)
                 {
                     CachedPropertyInfo info = new CachedPropertyInfo { Property = val, AccessName = val.Name, Type = val.PropertyType };
-                    var lbl = val.GetCustomAttribute<DisplayNameAttribute>();
-                    if (lbl != null)
-                        info.DisplayName = lbl.DisplayName;
-                    else
-                        info.DisplayName = val.Name.SplitCamelCase();
-
-                    if (val.PropertyType.IsEnum)
-                        info.enumNames = Enum.GetNames(val.PropertyType);
-
-                    var tip = val.GetCustomAttribute<DescriptionAttribute>();
-                    if (tip != null)
-                        info.Tip = tip.Description;
-
                     ret.Add(info);
                 }
             }
             if (scanFields_)
             {
                 FieldInfo[] infos = type.GetFields();
-                List<FieldInfo> processing = FilterByAttributes(type, infos);
-
-                foreach (var val in processing)
+                foreach (var val in infos)
                 {
                     CachedPropertyInfo info = new CachedPropertyInfo { Field = val, Type = val.FieldType, AccessName = val.Name };
-                    var lbl = val.GetCustomAttribute<DisplayNameAttribute>();
-                    if (lbl != null)
-                        info.DisplayName = lbl.DisplayName;
-                    else
-                        info.DisplayName = val.Name.SplitCamelCase();
-
-                    if (val.FieldType.IsEnum)
-                        info.enumNames = Enum.GetNames(val.FieldType);
-
-                    var tip = val.GetCustomAttribute<DescriptionAttribute>();
-                    if (tip != null)
-                        info.Tip = tip.Description;
-
                     ret.Add(info);
                 }
             }
 
-            var r = ret.OrderBy(o => o.DisplayName).ToList();
-            AlphabeticalCache[type] = r;
-            return r;
-        }
+            ret = Filter(type, ret);
 
-        public List<CachedPropertyInfo> Sort(Type type, List<PropertyInfo> infos)
-        {
-            if (Cache.ContainsKey(type))
-                return Cache[type];
+            for (int i = 0; i < ret.Count; ++i)
+                FillAttributes(type, ret[i]);
 
-            List<CachedPropertyInfo> retVal = new List<CachedPropertyInfo>();
-            List<PropertyInfo> processing = new List<PropertyInfo>();
-
-            var typeLevelIgnores = type.GetCustomAttributes<PropertyData.PropertyIgnoreAttribute>();
-
-            // First take the properties that not marked to ignore
-            processing.AddRange(infos.Where((p) => { return p.GetCustomAttribute<PropertyData.PropertyIgnoreAttribute>() == null; }));
-
-            if (typeLevelIgnores != null)
-            {
-                var ignoreNames = typeLevelIgnores.Select(p => p.PropName);
-                processing = processing.Where((p) => { return !ignoreNames.Contains(p.Name); }).ToList();
-            }
-
-            processing.Sort((lhs, rhs) => {
+            ret.Sort((lhs, rhs) => {
                 var lhsAttr = lhs.GetCustomAttribute<PropertyData.PropertyPriorityAttribute>();
                 var rhsAttr = rhs.GetCustomAttribute<PropertyData.PropertyPriorityAttribute>();
                 if (lhsAttr != null && rhsAttr == null)
@@ -813,25 +761,62 @@ namespace ImGuiControls
                 return 1;
             });
 
-            foreach (var val in processing)
-            {
-                CachedPropertyInfo info = new CachedPropertyInfo { Property = val };
-                info.DisplayName = val.Name.SplitCamelCase();
-                retVal.Add(info);
-            }
-
-            Cache[type] = retVal;
-            return retVal;
+            Cache[type] = ret;
+            return ret;
         }
 
-        static List<PropertyInfo> FilterByAttributes(Type type, PropertyInfo[] infos)
+        public List<CachedPropertyInfo> GetAlphabetical(Type type)
         {
-            List<PropertyInfo> processing = new List<PropertyInfo>();
+            if (AlphabeticalCache.ContainsKey(type))
+                return AlphabeticalCache[type];
+
+            List<CachedPropertyInfo> ret = new List<CachedPropertyInfo>();
+
+            if (scanProperties_)
+            {
+                PropertyInfo[] infos = type.GetProperties();
+                foreach (var val in infos)
+                {
+                    CachedPropertyInfo info = new CachedPropertyInfo { Property = val, AccessName = val.Name, Type = val.PropertyType };
+                    ret.Add(info);
+                }
+            }
+            if (scanFields_)
+            {
+                FieldInfo[] infos = type.GetFields();
+                foreach (var val in infos)
+                {
+                    CachedPropertyInfo info = new CachedPropertyInfo { Field = val, Type = val.FieldType, AccessName = val.Name };
+                    ret.Add(info);
+                }
+            }
+
+            ret = Filter(type, ret);
+
+            for (int i = 0; i < ret.Count; ++i)
+                FillAttributes(type, ret[i]);
+
+            var r = ret.OrderBy(o => o.DisplayName).ToList();
+            AlphabeticalCache[type] = r;
+            return r;
+        }
+
+        static List<CachedPropertyInfo> Filter(Type type, List<CachedPropertyInfo> infos)
+        {
+            List<CachedPropertyInfo> processing = new List<CachedPropertyInfo>();
             processing.AddRange(infos.Where((p) => {
+                // Property ignore attribute
                 if (p.GetCustomAttribute<PropertyData.PropertyIgnoreAttribute>() != null)
                     return false;
+
+                // Browsable to remove
                 var browsable = p.GetCustomAttribute<BrowsableAttribute>();
                 if (browsable != null && browsable.Browsable == false)
+                    return false;
+
+                // EditorBrowsable to remove
+                var editBrowse = p.GetCustomAttribute<EditorBrowsableAttribute>();
+                if (editBrowse != null && editBrowse.State == EditorBrowsableState.Never)
                     return false;
                 return true;
             }));
@@ -840,36 +825,54 @@ namespace ImGuiControls
             if (typeLevelIgnores != null)
             {
                 var ignoreNames = typeLevelIgnores.Select(p => p.PropName);
-                processing = processing.Where((p) => { return !ignoreNames.Contains(p.Name); }).ToList();
+                processing = processing.Where((p) => { return !ignoreNames.Contains(p.AccessName); }).ToList();
             }
 
             return processing;
         }
 
-        static List<FieldInfo> FilterByAttributes(Type type, FieldInfo[] infos)
+        static void FillAttributes(Type type, CachedPropertyInfo info)
         {
-            List<FieldInfo> processing = new List<FieldInfo>();
-            processing.AddRange(infos.Where((p) => {
-                if (p.GetCustomAttribute<PropertyData.PropertyIgnoreAttribute>() != null)
-                    return false;
-                var browsable = p.GetCustomAttribute<BrowsableAttribute>();
-                if (browsable != null && browsable.Browsable == false)
-                    return false;
-                return true;
-            }));
+            // Allow marking with a pretty name
+            var lbl = info.GetCustomAttribute<DisplayNameAttribute>();
+            if (lbl != null)
+                info.DisplayName = lbl.DisplayName;
+            else // or just split camel case
+                info.DisplayName = info.AccessName.SplitCamelCase();
 
-            var typeLevelIgnores = type.GetCustomAttributes<PropertyData.PropertyIgnoreAttribute>();
-            if (typeLevelIgnores != null)
+            // Allow the type to override the name whenever its meaning may change
+            PropertyData.OverrideNameAttribute[] nameOverrides = type.GetCustomAttributes<PropertyData.OverrideNameAttribute>().ToArray();
+            if (nameOverrides != null)
             {
-                var ignoreNames = typeLevelIgnores.Select(p => p.PropName);
-                processing = processing.Where((p) => { return !ignoreNames.Contains(p.Name); }).ToList();
+                for (int j = 0; j < nameOverrides.Length; ++j)
+                    if (info.AccessName.Equals(nameOverrides[j].Target))
+                        info.DisplayName = nameOverrides[j].NewName;
             }
 
-            return processing;
+            EditorAttribute[] editors = info.GetCustomAttributes<EditorAttribute>().ToArray();
+            if (editors != null)
+            {
+                for (int j = 0; j < editors.Length; ++j)
+                    info.EditType = (PropertyData.EditorType)Enum.Parse(typeof(PropertyData.EditorType),editors[j].EditorTypeName);
+                    //info.EditorKeys.Add(editors[j].EditorTypeName);
+            }
+
+            // Mark out fields that are advanced
+            EditorBrowsableAttribute browser = info.GetCustomAttribute<EditorBrowsableAttribute>();
+            if (browser != null)
+                info.IsAdvanced = browser.State == EditorBrowsableState.Advanced;
+
+            // Grab enum names if necessary
+            if (info.Type.IsEnum)
+                info.enumNames = Enum.GetNames(info.Type);
+
+            var tip = info.GetCustomAttribute<DescriptionAttribute>();
+            if (tip != null)
+                info.Tip = tip.Description;
         }
     }
 
-    internal static class PropertyExtMethods
+    public static class PropertyExtMethods
     {
         public static string SplitCamelCase(this string input)
         {
@@ -904,6 +907,21 @@ namespace ImGuiControls
             }
             return ret.ToString();
             //return System.Text.RegularExpressions.Regex.Replace(input, "([A-Z])", " $1", System.Text.RegularExpressions.RegexOptions.Compiled).Trim();
+        }
+
+        public static List<ReflectionCache.CachedPropertyInfo> ForEditor(this List<ReflectionCache.CachedPropertyInfo> src, string editor)
+        {
+            List<ReflectionCache.CachedPropertyInfo> ret = new List<ReflectionCache.CachedPropertyInfo>();
+            ret.AddRange(src);
+            for (int i = 0; i < ret.Count; ++i)
+            {
+                if (ret[i].EditorKeys.Count != 0 && !ret[i].EditorKeys.Contains(editor))
+                {
+                    ret.RemoveAt(i);
+                    --i;
+                }
+            }
+            return ret;
         }
     }
 }
