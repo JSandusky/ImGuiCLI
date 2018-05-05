@@ -566,6 +566,21 @@ namespace ImGuiCLI {
         static void PushBoldFont();
         static void PushLargeFont();
         static void PushLargeBoldFont();
+
+        /// Takes care of escape/close popup checks.
+        static void StandardPopupChecks();
+        /// Button that raises a menu when clicked.
+        static bool MenuButton(System::String^ label, System::String^ popup);
+        /// Button that raises a menu when clicked.
+        static bool MenuButton(System::String^ label, System::String^ popup, System::String^ tip);
+        /// Like MenuButton accept has an 'active' state, such as the button for a 'Snap Settings' popup, where snapping could be active|not
+        static bool ToggleMenuButton(System::String^ label, System::String^ popup, bool active);
+        /// Like MenuButton accept has an 'active' state, such as the button for a 'Snap Settings' popup, where snapping could be active|not
+        static bool ToggleMenuButton(System::String^ label, System::String^ popup, System::String^ tip, bool active);
+        /// Button that has a toggled/highlighted state.
+        static bool ToggleButton(System::String^ label, bool active);
+        /// Like a toggle button, but changes text based on state.
+        static bool AlternatingToggleButton(System::String^ active, System::String^ inactive, bool state);
     };
 
     [System::Flags]

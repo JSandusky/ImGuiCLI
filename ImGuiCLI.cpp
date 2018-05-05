@@ -797,6 +797,73 @@ namespace ImGuiCLI
     void ImGuiEx::PushBoldFont() { PushFont(2); }
     void ImGuiEx::PushLargeFont() { PushFont(1); }
     void ImGuiEx::PushLargeBoldFont() { PushFont(3); }
+
+    void ImGuiEx::StandardPopupChecks()
+    {
+        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Escape)))
+            ImGui::CloseCurrentPopup();
+    }
+    bool ImGuiEx::MenuButton(System::String^ label, System::String^ popup)
+    {
+        if (ImGui::Button(LBL, ImVec2(36, 36)))
+        {
+            ImGui::CloseCurrentPopup();
+            ImGui::OpenPopup(ToSTLString(popup).c_str());
+            return true;
+        }
+        return false;
+    }
+    bool ImGuiEx::MenuButton(System::String^ label, System::String^ popup, System::String^ tip)
+    {
+        if (ImGui::Button(LBL, ImVec2(36, 36)))
+        {
+            ImGui::CloseCurrentPopup();
+            ImGui::OpenPopup(ToSTLString(popup).c_str());
+            return true;
+        }
+        if (ImGui::IsItemHovered() && tip != nullptr)
+            ImGui::SetTooltip(ToSTLString(tip).c_str());
+        return false;
+    }
+    bool ImGuiEx::ToggleMenuButton(System::String^ label, System::String^ popup, bool active)
+    {
+        if (ImGuiEx::ToggleButton(label, active))
+        {
+            ImGui::CloseCurrentPopup();
+            ImGui::OpenPopup(ToSTLString(popup).c_str());
+            return true;
+        }
+        return false;
+    }
+    bool ImGuiEx::ToggleMenuButton(System::String^ label, System::String^ popup, System::String^ tip, bool state)
+    {
+        if (ImGuiEx::ToggleButton(label, state))
+        {
+            ImGui::CloseCurrentPopup();
+            ImGui::OpenPopup(ToSTLString(popup).c_str());
+            return true;
+        }
+        if (ImGui::IsItemHovered() && tip != nullptr)
+            ImGui::SetTooltip(ToSTLString(tip).c_str());
+        return false;
+    }
+    bool ImGuiEx::ToggleButton(System::String^ label, bool state)
+    {
+        if (state)
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.3f, .4f, .8f, 1.0f));
+
+        bool ret = ImGui::Button(LBL, ImVec2(36, 36));
+
+        if (state)
+            ImGui::PopStyleColor();
+
+        return ret;
+    }
+    bool ImGuiEx::AlternatingToggleButton(System::String^ active, System::String^ inactive, bool state)
+    {
+        std::string txt = state ? ToSTLString(active) : ToSTLString(inactive);
+        return ImGui::Button(txt.c_str(), ImVec2(36, 36));
+    }
 }
 
 // ImGuiIO functions placed outside of ImGuiCLI namespace as fully qualifying the name makes collisions with
