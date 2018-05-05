@@ -26,7 +26,12 @@ inline int GetPointer(System::Object^ obj)
 
 inline std::string ToSTLString(System::String^ str)
 {
-    return msclr::interop::marshal_as<std::string>(str);
+    // need to do this because ImGui works with UTF-8, C# works with UTF-16, meshes up international characters and Font-Awesome
+    array<Byte>^ bytes = System::Text::Encoding::UTF8->GetBytes(str);
+    std::string stlStr;
+    stlStr.resize(bytes->Length);
+    Marshal::Copy(bytes, 0, IntPtr((void*)stlStr.data()), bytes->Length);
+    return stlStr;
 }
 
 inline void CopyStrBuff(System::String^ str, char* target)
@@ -34,10 +39,9 @@ inline void CopyStrBuff(System::String^ str, char* target)
     // Just retun out if the string is null
     if (str == nullptr)
         return;
-    IntPtr p = Marshal::StringToHGlobalAnsi(str);
-    const char* linkStr = static_cast<char*>(p.ToPointer());
-    strcpy(target, linkStr);
-    Marshal::FreeHGlobal(p);
+
+    array<Byte>^ bytes = System::Text::Encoding::UTF8->GetBytes(str);
+    Marshal::Copy(bytes, 0, IntPtr((void*)target), bytes->Length);
 }
 
 namespace ImGuiCLI
@@ -300,6 +304,26 @@ namespace ImGuiCLI
         if (ImGui::ColorEdit4(LBL, &col.X, ImGuiColorEditFlags_AlphaBar))
         {
             v = Color(col.X, col.Y, col.Z, col.W);
+            return true;
+        }
+        return false;
+    }
+    bool ImGuiCli::InputColor(System::String^ label, Vector3% v)
+    {
+        auto col = v;
+        if (ImGui::ColorEdit3(LBL, &col.X, ImGuiColorEditFlags_NoAlpha))
+        {
+            v = col;
+            return true;
+        }
+        return false;
+    }
+    bool ImGuiCli::InputColor(System::String^ label, Vector4% v)
+    {
+        auto col = v;
+        if (ImGui::ColorEdit4(LBL, &col.X, ImGuiColorEditFlags_AlphaBar))
+        {
+            v = col;
             return true;
         }
         return false;
@@ -620,6 +644,16 @@ namespace ImGuiCLI
     {
         pin_ptr<float> p = &values[0];
         ImGui::PlotLines(LBL, p, values->Length, valueOffset);
+    }
+    void ImGuiCli::PlotLines(System::String^ label, array<float>^ values, int valueOffset, Vector2 size)
+    {
+        pin_ptr<float> p = &values[0];
+        ImGui::PlotLines(LBL, p, values->Length, valueOffset, 0, FLT_MAX, FLT_MAX, ImVec2(size.X, size.Y));
+    }
+    void ImGuiCli::PlotLines(System::String^ label, array<float>^ values, int valueOffset, float minVal, float maxVal, Vector2 size)
+    {
+        pin_ptr<float> p = &values[0];
+        ImGui::PlotLines(LBL, p, values->Length, valueOffset, 0, minVal, maxVal, ImVec2(size.X, size.Y));
     }
     void ImGuiCli::PlotLines(System::String^ label, array<float>^ values, int valueOffset, float minVal, float maxVal) 
     {

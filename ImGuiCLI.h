@@ -377,6 +377,8 @@ namespace ImGuiCLI {
         static bool DragFloat3(System::String^ label, Vector3% v, float speed, float min, float max);
         static bool DragFloat4(System::String^ label, Vector4% v, float speed, float min, float max);
         static bool InputColor(System::String^ label, Color% v);
+        static bool InputColor(System::String^ label, Vector3% v);
+        static bool InputColor(System::String^ label, Vector4% v);
 
         static bool Selectable(System::String^ txt, bool selected);
         static bool Selectable(System::String^ txt, bool selected, ImGuiSelectableFlags_ flags);
@@ -513,7 +515,9 @@ namespace ImGuiCLI {
         static void PlotHistogram(System::String^ label, array<float>^ values, int valueOffset, System::String^ overlayText, float minVal, float maxVal);
         static void PlotLines(System::String^ label, array<float>^ values) { PlotLines(label, values, 0); }
         static void PlotLines(System::String^ label, array<float>^ values, int valueOffset);
+        static void PlotLines(System::String^ label, array<float>^ values, int valueOffset, Vector2 size);
         static void PlotLines(System::String^ label, array<float>^ values, int valueOffset, float minVal, float maxVal);
+        static void PlotLines(System::String^ label, array<float>^ values, int valueOffset, float minVal, float maxVal, Vector2 size);
         static void PlotLines(System::String^ label, array<float>^ values, int valueOffset, System::String^ overlayText, float minVal, float maxVal);
 
         // Clipping
