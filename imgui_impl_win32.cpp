@@ -491,6 +491,8 @@ static ImVec2 ImGui_ImplWin32_GetWindowPos(ImGuiViewport* viewport)
 static void ImGui_ImplWin32_SetWindowPos(ImGuiViewport* viewport, ImVec2 pos)
 {
     ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    if (data == nullptr)
+        return;
     IM_ASSERT(data->Hwnd != 0);
     RECT rect = { (LONG)pos.x, (LONG)pos.y, (LONG)pos.x, (LONG)pos.y };
     ::AdjustWindowRectEx(&rect, data->DwStyle, FALSE, data->DwExStyle);
@@ -509,6 +511,8 @@ static ImVec2 ImGui_ImplWin32_GetWindowSize(ImGuiViewport* viewport)
 static void ImGui_ImplWin32_SetWindowSize(ImGuiViewport* viewport, ImVec2 size)
 {
     ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    if (data == nullptr)
+        return;
     IM_ASSERT(data->Hwnd != 0);
     RECT rect = { 0, 0, (LONG)size.x, (LONG)size.y };
     ::AdjustWindowRectEx(&rect, data->DwStyle, FALSE, data->DwExStyle); // Client to Screen
@@ -518,6 +522,8 @@ static void ImGui_ImplWin32_SetWindowSize(ImGuiViewport* viewport, ImVec2 size)
 static void ImGui_ImplWin32_SetWindowFocus(ImGuiViewport* viewport)
 {
     ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    if (data == nullptr)
+        return;
     IM_ASSERT(data->Hwnd != 0);
     ::BringWindowToTop(data->Hwnd);
     ::SetForegroundWindow(data->Hwnd);
@@ -527,6 +533,8 @@ static void ImGui_ImplWin32_SetWindowFocus(ImGuiViewport* viewport)
 static bool ImGui_ImplWin32_GetWindowFocus(ImGuiViewport* viewport)
 {
     ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
+    if (data == nullptr)
+        return false;
     IM_ASSERT(data->Hwnd != 0);
     return ::GetActiveWindow() == data->Hwnd;
 }
@@ -534,7 +542,9 @@ static bool ImGui_ImplWin32_GetWindowFocus(ImGuiViewport* viewport)
 static void ImGui_ImplWin32_SetWindowTitle(ImGuiViewport* viewport, const char* title)
 {
     ImGuiViewportDataWin32* data = (ImGuiViewportDataWin32*)viewport->PlatformUserData;
-    IM_ASSERT(data->Hwnd != 0);
+    //IM_ASSERT(data->Hwnd != 0);
+    if (data == nullptr)
+        return;
     ::SetWindowTextA(data->Hwnd, title);
 }
 

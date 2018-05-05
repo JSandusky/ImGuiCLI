@@ -322,12 +322,12 @@ namespace ImGui
 
             const ImVec2 min = GetItemRectMin();
             const ImVec2 max = GetItemRectMax();
-            const float spacing = g.Style.ItemInnerSpacing.x;
+            const float spacing = g.Style.FrameRounding;// g.Style.ItemInnerSpacing.x;
             const float halfSpacing = spacing / 2;
 
             // This is the main change
-            window->DrawList->AddRectFilled({ min.x, min.y + 1 }, { min.x + 8 , max.y - 1 }, colors[i], 1.0f, ImDrawCornerFlags_BotLeft | ImDrawCornerFlags_TopLeft);
-            //window->DrawList->AddLine({ min.x + spacing, max.y - halfSpacing }, { max.x - spacing, max.y - halfSpacing }, colors[i], 4);
+            //window->DrawList->AddRectFilled({ min.x, min.y + 1 }, { min.x + 8 , max.y - 1 }, colors[i], 1.0f, ImDrawCornerFlags_BotLeft | ImDrawCornerFlags_TopLeft);
+            window->DrawList->AddLine({ min.x + spacing, max.y - halfSpacing }, { max.x - spacing, max.y - halfSpacing }, colors[i], 4);
 
             SameLine(0, g.Style.ItemInnerSpacing.x);
             PopID();
