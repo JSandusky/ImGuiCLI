@@ -695,6 +695,29 @@ namespace ImGuiCLI
         return false;
     }
 
+    bool ImGuiEx::MatrixTransform(Matrix% matrix, bool includeScale)
+    {
+        ImGui::Indent();
+        // MG uses DX system, ImGuizmo OGL
+        Matrix m = Matrix::Transpose(matrix);
+        float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+        ImGuizmo::DecomposeMatrixToComponents(&m.M11, matrixTranslation, matrixRotation, matrixScale);
+        ImGui::Text("Position");
+        bool changed = ImGui::DragFloatN_Colored("##Tr", matrixTranslation, 3);
+        ImGui::Text("Rotation");
+        changed |= ImGui::DragFloatN_Colored("##Rt", matrixRotation, 3);
+        ImGui::Text("Scale");
+        changed |= ImGui::DragFloatN_Colored("##Sc", matrixScale, 3);
+        ImGui::Unindent();
+        if (changed)
+        {
+            ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, &m.M11);
+            matrix = Matrix::Transpose(m);
+            return true;
+        }
+        return false;
+    }
+
     bool ImGuiEx::RangeSliderFloat(System::String^ label, float% min, float% max, float vMin, float vMax)
     {
         float mi = min; float mx = max;

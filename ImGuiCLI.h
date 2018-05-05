@@ -540,6 +540,8 @@ namespace ImGuiCLI {
     {
     public:
         static bool DragMatrix(Matrix% matrix);
+        /// Outputs a complete translate/rotate/scale editor
+        static bool MatrixTransform(Matrix% matrix, bool includeScale);
 
         static bool RangeSliderFloat(System::String^ label, float% min, float% max, float vMin, float vMax);
         static bool BitField(System::String^ label, unsigned% bits);
