@@ -1110,6 +1110,8 @@ struct DockContext
 		pos.y += (drewTabs ? tabbar_height : 0) +  !dock.noPad ? (GetStyle().WindowPadding.y*2 + SPLIT_SIZE*2) : 0;
 		size.y -= (drewTabs ? tabbar_height : 0) + !dock.noPad ? (GetStyle().WindowPadding.y*2 + SPLIT_SIZE*2) : 0;
         pos.x +=  !dock.noPad ? SPLIT_SIZE*2 : 0;
+        if (extra_flags & ImGuiWindowFlags_MenuBar)
+            pos.y += SPLIT_SIZE;
         size.x -= !dock.noPad ? SPLIT_SIZE*2 : 0;
 
 		SetCursorScreenPos(pos);
