@@ -118,6 +118,8 @@ Complete example [gist](https://gist.github.com/JSandusky/11b6a6ea85d42c9ab86063
 
 - Change visibility of Microsoft.Xna.Framework.Windows.**WinFormsGameWindow to public**
 
+- Change visibility of **WinFormsGameWindow**'s  member **WinFormsGameForm Form; to public**
+
 - Change visibility of Microsoft.Xna.Framework.Windows.**WinFormsGameForm to public**
 
 - Change visibility of Microsoft.Xna.Framework.Windows.**HorizontalMouseWheelEventArgs to public**
