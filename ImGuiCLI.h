@@ -228,6 +228,14 @@ namespace ImGuiCLI {
         HeightMask_ = HeightSmall | HeightRegular | HeightLarge | HeightLargest
     };
 
+    public enum class ImGuiCond_
+    {
+        Always = 1 << 0,   // Set the variable
+        Once = 1 << 1,   // Set the variable once per runtime session (only the first call with succeed)
+        FirstUseEver = 1 << 2,   // Set the variable if the object/window has no persistently saved data (no entry in .ini file)
+        Appearing = 1 << 3
+    };
+
     public ref class ImGuiStyle
     {
     public:
@@ -317,6 +325,13 @@ namespace ImGuiCLI {
         static bool BeginChild(System::String^ id, Vector2 size) { return BeginChild(id, size, false); }
         static bool BeginChild(System::String^ id, Vector2 size, bool border);
         static void EndChild();
+
+        static void SetNextWindowPos(Vector2 size, ImGuiCond_ cond);
+        static void SetNextWindowSize(Vector2 size, ImGuiCond_ cond);
+        static void SetNextWindowContentWidth(float size);
+        static void SetNextWindowFocus();
+        static void SetNextWindowPosCenter(ImGuiCond_ cond);
+        static void SetNextWindowSizeConstraints(Vector2 minSize, Vector2 maxSize);
 
         static Vector2 GetContentRegionMax();
         static Vector2 GetContentRegionAvail();
@@ -563,6 +578,7 @@ namespace ImGuiCLI {
 
         static void PushFont(int idx);
         static void PopFont();
+        static void PushMonoFont();
         static void PushBoldFont();
         static void PushLargeFont();
         static void PushLargeBoldFont();

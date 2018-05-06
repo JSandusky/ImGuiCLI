@@ -147,6 +147,7 @@
     <ClInclude Include="stb_rect_pack.h" />
     <ClInclude Include="stb_textedit.h" />
     <ClInclude Include="stb_truetype.h" />
+    <ClInclude Include="TextEdit.h" />
     <ClInclude Include="TextEditor.h" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +165,7 @@
     <ClCompile Include="imgui_impl_win32.cpp" />
     <ClCompile Include="imgui_tabs.cpp" />
     <ClCompile Include="ImSequencer.cpp" />
+    <ClCompile Include="TextEdit.cpp" />
     <ClCompile Include="TextEditor.cpp" />
   </ItemGroup>
   <ItemGroup>

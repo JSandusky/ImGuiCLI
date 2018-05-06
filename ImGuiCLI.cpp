@@ -89,6 +89,30 @@ namespace ImGuiCLI
 
     bool ImGuiCli::BeginChild(System::String^ label, Vector2 size, bool border) { return ImGui::BeginChild(LBL, ImVec2(size.X, size.Y), border); }
     void ImGuiCli::EndChild() { ImGui::EndChild(); }
+    void ImGuiCli::SetNextWindowPos(Vector2 size, ImGuiCond_ cond)
+    {
+        ImGui::SetNextWindowPos(ImVec2(size.X, size.Y), (int)cond);
+    }
+    void ImGuiCli::SetNextWindowSize(Vector2 size, ImGuiCond_ cond)
+    {
+        ImGui::SetNextWindowSize(ImVec2(size.X, size.Y), (int)cond);
+    }
+    void ImGuiCli::SetNextWindowContentWidth(float size)
+    {
+        ImGui::SetNextWindowContentWidth(size);
+    }
+    void ImGuiCli::SetNextWindowFocus()
+    {
+        ImGui::SetNextWindowFocus();
+    }
+    void ImGuiCli::SetNextWindowPosCenter(ImGuiCond_ cond)
+    {
+        ImGui::SetNextWindowPosCenter((int)cond);
+    }
+    void ImGuiCli::SetNextWindowSizeConstraints(Vector2 minSize, Vector2 maxSize)
+    {
+        ImGui::SetNextWindowSizeConstraints(ImVec2(minSize.X, minSize.Y), ImVec2(maxSize.X, maxSize.Y));
+    }
 
     Vector2 ImGuiCli::GetContentRegionMax()
     {
@@ -795,6 +819,7 @@ namespace ImGuiCLI
     void ImGuiEx::PushFont(int idx) { ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[idx]); }
     void ImGuiEx::PopFont() { ImGui::PopFont(); }
     void ImGuiEx::PushBoldFont() { PushFont(2); }
+    void ImGuiEx::PushMonoFont() { PushFont(4); }
     void ImGuiEx::PushLargeFont() { PushFont(1); }
     void ImGuiEx::PushLargeBoldFont() { PushFont(3); }
 

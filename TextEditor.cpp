@@ -4,6 +4,7 @@
 #include <regex>
 
 #include "TextEditor.h"
+#include "imgui_internal.h"
 
 #undef max
 #undef min
@@ -210,7 +211,12 @@ TextEditor::Coordinates TextEditor::ScreenPosToCoordinates(const ImVec2& aPositi
 	ImVec2 local(aPosition.x - origin.x, aPosition.y - origin.y);
 
 	int lineNo = std::max(0, (int)floor(local.y / mCharAdvance.y));
+    float fPos = local.x / mCharAdvance.x - cTextStart;
+    float frac = fPos - floorf(fPos);
+
 	int columnCoord = std::max(0, (int)floor(local.x / mCharAdvance.x) - cTextStart);
+    if (frac > 0.5f)
+        columnCoord += 1;
 
 	int column = 0;
 	if (lineNo >= 0 && lineNo < (int)mLines.size())
@@ -378,8 +384,11 @@ void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 	mWithinRender = true;
 
 	ImGuiIO& io = ImGui::GetIO();
-	auto xadv = (io.Fonts->Fonts[0]->IndexAdvanceX['X']);
-	mCharAdvance = ImVec2(xadv, io.Fonts->Fonts[0]->FontSize + mLineSpacing);
+    ::ImGuiContext* c = ImGui::GetCurrentContext();
+    auto xadv = (c->Font->IndexAdvanceX['X']);
+    //auto xadv = (c->Font->FallbackAdvanceX);// ->IndexAdvanceX['X']);
+    xadv *= (c->FontSize / c->Font->FontSize);
+	mCharAdvance = ImVec2(xadv, c->FontSize + mLineSpacing);
 
 	ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, ImGui::ColorConvertU32ToFloat4(mPalette[(int)PaletteIndex::Background]));
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
