@@ -21,6 +21,8 @@ namespace ImGuiCLI
         static property System::String^ SMILE { System::String^ get(); }
         static property System::String^ PIGGY_BANK { System::String^ get(); }
         static property System::String^ OUTDENT { System::String^ get(); }
+		
+		
         static property System::String^ FAX { System::String^ get(); }
         static property System::String^ CALENDAR_PLUS { System::String^ get(); }
         static property System::String^ LONG_ARROW_ALT_RIGHT { System::String^ get(); }
